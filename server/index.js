@@ -38,9 +38,11 @@ const generateToken = (user) => {
   return jwt.sign({ email: user.email, name: user.name }, SECRET_KEY, { expiresIn: '7d' });
 };
 
-// --- РОУТЫ АВТОРИЗАЦИИ ---
+// --- СОЗДАЕМ ЕДИНЫЙ API РОУТЕР ---
+const apiRouter = express.Router();
 
-app.post('/api/auth/register', async (req, res) => {
+// Роуты авторизации
+apiRouter.post('/auth/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
     const existingUser = await User.findOne({ email });
@@ -67,7 +69,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+apiRouter.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -91,7 +93,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', verifyToken, async (req, res) => {
+apiRouter.get('/auth/me', verifyToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
@@ -108,9 +110,8 @@ app.get('/api/auth/me', verifyToken, async (req, res) => {
   }
 });
 
-// --- РОУТЫ ПРОФИЛЯ ---
-
-app.put('/api/users/profile', verifyToken, async (req, res) => {
+// Роуты профиля
+apiRouter.put('/users/profile', verifyToken, async (req, res) => {
   try {
     const { name, avatar, color } = req.body;
     const updatedUser = await User.findOneAndUpdate(
@@ -129,9 +130,8 @@ app.put('/api/users/profile', verifyToken, async (req, res) => {
   }
 });
 
-// --- РОУТЫ ИЗБРАННОГО ---
-
-app.get('/api/favorites', verifyToken, async (req, res) => {
+// Роуты избранного
+apiRouter.get('/favorites', verifyToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email });
     res.json(user ? user.favorites : []);
@@ -140,7 +140,7 @@ app.get('/api/favorites', verifyToken, async (req, res) => {
   }
 });
 
-app.post('/api/favorites', verifyToken, async (req, res) => {
+apiRouter.post('/favorites', verifyToken, async (req, res) => {
   try {
     const { movieId } = req.body;
     const user = await User.findOne({ email: req.user.email });
@@ -158,9 +158,8 @@ app.post('/api/favorites', verifyToken, async (req, res) => {
   }
 });
 
-// --- РОУТЫ ОТЗЫВОВ ---
-
-app.get('/api/reviews', async (req, res) => {
+// Роуты отзывов
+apiRouter.get('/reviews', async (req, res) => {
   try {
     const reviews = await Review.find();
     res.json(reviews);
@@ -169,7 +168,7 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-app.post('/api/reviews', verifyToken, async (req, res) => {
+apiRouter.post('/reviews', verifyToken, async (req, res) => {
   try {
     const { movie_id, movie_title, movie_poster, text, rating, date } = req.body;
 
@@ -186,7 +185,7 @@ app.post('/api/reviews', verifyToken, async (req, res) => {
   }
 });
 
-app.delete('/api/reviews/:id', verifyToken, async (req, res) => {
+apiRouter.delete('/reviews/:id', verifyToken, async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
@@ -203,8 +202,10 @@ app.delete('/api/reviews/:id', verifyToken, async (req, res) => {
   }
 });
 
-// --- РАЗДАЧА СТАТИКИ ФРОНТЕНДА (Vite dist) ---
+// Подключаем весь роутер на префикс /api
+app.use('/api', apiRouter);
 
+// --- РАЗДАЧА СТАТИКИ ФРОНТЕНДА ---
 app.use(express.static(path.join(__dirname, '../dist')));
 
 app.get('*', (req, res) => {
