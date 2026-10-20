@@ -25,8 +25,18 @@ export function AuthModal({ isOpen, onClose, onLogin }) {
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Ошибка входа');
+      // Безопасное чтение ответа: сначала получаем текст, чтобы не было сбоев JSON
+      const text = await res.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        console.error('Ответ сервера не является JSON:', text);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || `Ошибка сервера (статус ${res.status})`);
+      }
 
       onLogin(data.token, data.user);
       onClose();
