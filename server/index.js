@@ -14,8 +14,8 @@ const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || 'fallback_secret_key';
 
 // Инициализация базы данных SQLite
-const dbFile = path.join(__dirname, 'database.sqlite');
-const db = new sqlite3.Database(dbFile, (err) => {
+const dbPath = path.join(__dirname, 'database.sqlite');
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Ошибка открытия базы данных SQLite:', err.message);
   } else {
