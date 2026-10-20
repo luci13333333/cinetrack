@@ -1,63 +1,30 @@
-require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const mongoose = require('mongoose');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+
+const User = require('./models/User');
+const Review = require('./models/Review');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 5000;
-const SECRET_KEY = process.env.SECRET_KEY || 'fallback_secret_key';
+const SECRET_KEY = process.env.SECRET_KEY || 'super_secret_jwt_key_123';
+const MONGO_URL = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/cinetrack';
 
-// Инициализация базы данных SQLite
-const dbPath = path.join(__dirname, 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Ошибка открытия базы данных SQLite:', err.message);
-  } else {
-    console.log('✅ База данных SQLite успешно инициализирована');
-  }
-});
-
-// Создание таблиц
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    email TEXT UNIQUE,
-    password TEXT,
-    avatar TEXT,
-    color TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    movie_id INTEGER,
-    movie_title TEXT,
-    movie_poster TEXT,
-    user_email TEXT,
-    author TEXT,
-    text TEXT,
-    rating INTEGER,
-    date TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS favorites (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_email TEXT,
-    movie_id INTEGER
-  )`);
-});
+// Подключение к MongoDB
+mongoose.connect(MONGO_URL)
+  .then(() => console.log('Успешное подключение к MongoDB'))
+  .catch(err => console.error('Ошибка подключения к MongoDB:', err));
 
 // Middleware для проверки JWT токена
-const authenticateToken = (req, res, next) => {
+const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Требуется авторизация' });
+  if (!token) return res.status(401).json({ error: 'Нет токена авторизации' });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) return res.status(403).json({ error: 'Недействительный токен' });
@@ -66,191 +33,185 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Регистрация с проверкой занятости email
+// Генерация JWT токена
+const generateToken = (user) => {
+  return jwt.sign({ email: user.email, name: user.name }, SECRET_KEY, { expiresIn: '7d' });
+};
+
+// --- РОУТЫ АВТОРИЗАЦИИ ---
+
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Введите email и пароль' });
+    const { email, password, name } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email уже занят' });
     }
 
-    db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, existingUser) => {
-      if (err) {
-        return res.status(500).json({ error: 'Ошибка базы данных' });
+    const newUser = new User({ email, password, name });
+    await newUser.save();
+
+    const token = generateToken(newUser);
+    res.json({
+      token,
+      user: {
+        name: newUser.name,
+        email: newUser.email,
+        avatar: newUser.avatar,
+        color: newUser.color
       }
-
-      if (existingUser) {
-        return res.status(400).json({ error: 'Пользователь с таким email уже зарегистрирован!' });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      db.run(
-        `INSERT INTO users (name, email, password, avatar, color) VALUES (?, ?, ?, ?, ?)`,
-        [name || 'Пользователь', email, hashedPassword, '', 'bg-blue-600'],
-        function(insertErr) {
-          if (insertErr) {
-            return res.status(500).json({ error: 'Ошибка при создании пользователя' });
-          }
-
-          const token = jwt.sign({ id: this.lastID, email }, SECRET_KEY, { expiresIn: '7d' });
-          
-          res.json({
-            token,
-            user: { id: this.lastID, name: name || 'Пользователь', email, avatar: '', color: 'bg-blue-600' }
-          });
-        }
-      );
     });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+    console.error('Ошибка регистрации:', err);
+    res.status(500).json({ error: err.message || 'Ошибка сервера при регистрации' });
   }
 });
 
-// Авторизация (Логин)
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-
-  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
-    if (err || !user) {
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user || user.password !== password) {
       return res.status(400).json({ error: 'Неверный email или пароль' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(400).json({ error: 'Неверный email или пароль' });
-    }
-
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
+    const token = generateToken(user);
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar, color: user.color }
-    });
-  });
-});
-
-// Проверка текущего пользователя по токену
-app.get('/api/auth/me', authenticateToken, (req, res) => {
-  db.get(`SELECT id, name, email, avatar, color FROM users WHERE email = ?`, [req.user.email], (err, user) => {
-    if (err || !user) {
-      return res.status(404).json({ error: 'Пользователь не найден' });
-    }
-    res.json({ user });
-  });
-});
-
-// Получение всех отзывов
-app.get('/api/reviews', (req, res) => {
-  db.all(`SELECT * FROM reviews`, [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows);
-  });
-});
-
-// Добавление / обновление отзыва
-app.post('/api/reviews', authenticateToken, (req, res) => {
-  const { movie_id, movie_title, movie_poster, text, rating, date } = req.body;
-  
-  db.get(`SELECT name FROM users WHERE email = ?`, [req.user.email], (err, userRow) => {
-    const authorName = userRow ? userRow.name : 'Пользователь';
-
-    db.get(`SELECT id FROM reviews WHERE movie_id = ? AND user_email = ?`, [movie_id, req.user.email], (err, existingReview) => {
-      if (existingReview) {
-        db.run(
-          `UPDATE reviews SET text = ?, rating = ?, date = ?, movie_title = ?, movie_poster = ? WHERE id = ?`,
-          [text, rating, date, movie_title, movie_poster, existingReview.id],
-          function(updateErr) {
-            if (updateErr) return res.status(500).json({ error: updateErr.message });
-            sendAllReviews(res);
-          }
-        );
-      } else {
-        db.run(
-          `INSERT INTO reviews (movie_id, movie_title, movie_poster, user_email, author, text, rating, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [movie_id, movie_title, movie_poster, req.user.email, authorName, text, rating, date],
-          function(insertErr) {
-            if (insertErr) return res.status(500).json({ error: insertErr.message });
-            sendAllReviews(res);
-          }
-        );
+      user: {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        color: user.color
       }
     });
-  });
+  } catch (err) {
+    console.error('Ошибка входа:', err);
+    res.status(500).json({ error: err.message || 'Ошибка сервера при входе' });
+  }
 });
 
-// Удаление отзыва
-app.delete('/api/reviews/:id', authenticateToken, (req, res) => {
-  const reviewId = req.params.id;
-  db.run(`DELETE FROM reviews WHERE id = ? AND user_email = ?`, [reviewId, req.user.email], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    sendAllReviews(res);
-  });
+app.get('/api/auth/me', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({
+      user: {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        color: user.color
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-function sendAllReviews(res) {
-  db.all(`SELECT * FROM reviews`, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-}
+// --- РОУТЫ ПРОФИЛЯ ---
 
-// Получение избранного
-app.get('/api/favorites', authenticateToken, (req, res) => {
-  db.all(`SELECT movie_id FROM favorites WHERE user_email = ?`, [req.user.email], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows.map(r => r.movie_id));
-  });
+app.put('/api/users/profile', verifyToken, async (req, res) => {
+  try {
+    const { name, avatar, color } = req.body;
+    const updatedUser = await User.findOneAndUpdate(
+      { email: req.user.email },
+      { name, avatar, color },
+      { new: true }
+    );
+    res.json({
+      name: updatedUser.name,
+      email: updatedUser.email,
+      avatar: updatedUser.avatar,
+      color: updatedUser.color
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Добавление / удаление из избранного
-app.post('/api/favorites', authenticateToken, (req, res) => {
-  const { movieId } = req.body;
-  db.get(`SELECT id FROM favorites WHERE user_email = ? AND movie_id = ?`, [req.user.email, movieId], (err, row) => {
-    if (row) {
-      db.run(`DELETE FROM favorites WHERE user_email = ? AND movie_id = ?`, [req.user.email, movieId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        sendUserFavorites(req.user.email, res);
-      });
+// --- РОУТЫ ИЗБРАННОГО ---
+
+app.get('/api/favorites', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    res.json(user ? user.favorites : []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/favorites', verifyToken, async (req, res) => {
+  try {
+    const { movieId } = req.body;
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    if (user.favorites.includes(movieId)) {
+      user.favorites = user.favorites.filter(id => id !== movieId);
     } else {
-      db.run(`INSERT INTO favorites (user_email, movie_id) VALUES (?, ?)`, [req.user.email, movieId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        sendUserFavorites(req.user.email, res);
-      });
+      user.favorites.push(movieId);
     }
-  });
+    await user.save();
+    res.json(user.favorites);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-function sendUserFavorites(email, res) {
-  db.all(`SELECT movie_id FROM favorites WHERE user_email = ?`, [email], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows.map(r => r.movie_id));
-  });
-}
+// --- РОУТЫ ОТЗЫВОВ ---
 
-// Обновление профиля
-app.put('/api/users/profile', authenticateToken, (req, res) => {
-  const { name, avatar, color } = req.body;
-  db.run(
-    `UPDATE users SET name = ?, avatar = ?, color = ? WHERE email = ?`,
-    [name, avatar, color, req.user.email],
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      db.get(`SELECT id, name, email, avatar, color FROM users WHERE email = ?`, [req.user.email], (err, user) => {
-        res.json(user);
-      });
-    }
-  );
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const reviews = await Review.find();
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Раздача фронтенда для продакшена
+app.post('/api/reviews', verifyToken, async (req, res) => {
+  try {
+    const { movie_id, movie_title, movie_poster, text, rating, date } = req.body;
+
+    await Review.findOneAndUpdate(
+      { movie_id, user_email: req.user.email },
+      { movie_title, movie_poster, author: req.user.name, text, rating, date, user_email: req.user.email },
+      { upsert: true, new: true }
+    );
+
+    const allReviews = await Review.find();
+    res.json(allReviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/reviews/:id', verifyToken, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    
+    if (review.user_email !== req.user.email) {
+      return res.status(403).json({ error: 'Нет прав на удаление этого отзыва' });
+    }
+
+    await Review.findByIdAndDelete(req.params.id);
+    const allReviews = await Review.find();
+    res.json(allReviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- РАЗДАЧА СТАТИКИ ФРОНТЕНДА (Vite dist) ---
+
 app.use(express.static(path.join(__dirname, '../dist')));
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Бэкенд с JWT и SQLite запущен на http://localhost:${PORT}`);
+  console.log(`Сервер запущен на порту ${PORT}`);
 });
