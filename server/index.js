@@ -12,6 +12,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Логгер входящих запросов для отладки 405 ошибки
+app.use((req, res, next) => {
+  console.log(`[INCOMING REQUEST] Method: ${req.method} | URL: ${req.url}`);
+  next();
+});
+
 const SECRET_KEY = process.env.SECRET_KEY || 'super_secret_jwt_key_123';
 const MONGO_URL = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/cinetrack';
 
