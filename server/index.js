@@ -1,21 +1,22 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-const jwt = require('jsonwebtoken');
+import User from './models/User.js';
+import Review from './models/Review.js';
 
-const User = require('./models/User');
-const Review = require('./models/Review');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Логгер входящих запросов для отладки 405 ошибки
+// Отладочный логгер входящих запросов
 app.use((req, res, next) => {
   console.log(`[INCOMING REQUEST] Method: ${req.method} | URL: ${req.url}`);
   next();
@@ -42,15 +43,12 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Генерация JWT токена
 const generateToken = (user) => {
   return jwt.sign({ email: user.email, name: user.name }, SECRET_KEY, { expiresIn: '7d' });
 };
 
-// --- СОЗДАЕМ ЕДИНЫЙ API РОУТЕР ---
 const apiRouter = express.Router();
 
-// Роуты авторизации
 apiRouter.post('/auth/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -119,7 +117,6 @@ apiRouter.get('/auth/me', verifyToken, async (req, res) => {
   }
 });
 
-// Роуты профиля
 apiRouter.put('/users/profile', verifyToken, async (req, res) => {
   try {
     const { name, avatar, color } = req.body;
@@ -139,7 +136,6 @@ apiRouter.put('/users/profile', verifyToken, async (req, res) => {
   }
 });
 
-// Роуты избранного
 apiRouter.get('/favorites', verifyToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email });
@@ -167,7 +163,6 @@ apiRouter.post('/favorites', verifyToken, async (req, res) => {
   }
 });
 
-// Роуты отзывов
 apiRouter.get('/reviews', async (req, res) => {
   try {
     const reviews = await Review.find();
@@ -211,10 +206,8 @@ apiRouter.delete('/reviews/:id', verifyToken, async (req, res) => {
   }
 });
 
-// Подключаем весь роутер на префикс /api
 app.use('/api', apiRouter);
 
-// --- РАЗДАЧА СТАТИКИ ФРОНТЕНДА ---
 app.use(express.static(path.join(__dirname, '../dist')));
 
 app.get('*', (req, res) => {
