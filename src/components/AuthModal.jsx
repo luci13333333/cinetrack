@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
+
 export function AuthModal({ isOpen, onClose, onLogin }) {
   if (!isOpen) return null;
 
@@ -13,11 +15,11 @@ export function AuthModal({ isOpen, onClose, onLogin }) {
     e.preventDefault();
     setError(null);
 
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+    const endpoint = isRegister ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
     const payload = isRegister ? { email, password, name } : { email, password };
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
