@@ -247,3 +247,65 @@ apiRouter.post('/watchlist', verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+const STATUS_KEYS = ['watchlist', 'watching', 'completed', 'on_hold', 'dropped'];
+
+apiRouter.get('/statuses', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.json({
+        watchlist: [],
+        watching: [],
+        completed: [],
+        on_hold: [],
+        dropped: [],
+      });
+    }
+    res.json({
+      watchlist: user.watchlist || [],
+      watching: user.watching || [],
+      completed: user.completed || [],
+      on_hold: user.on_hold || [],
+      dropped: user.dropped || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/statuses', verifyToken, async (req, res) => {
+  try {
+    const { movieId, status } = req.body;
+    const numericId = Number(movieId);
+    if (Number.isNaN(numericId)) {
+      return res.status(400).json({ error: 'Некорректный movieId' });
+    }
+
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    // Убираем фильм из всех списков статусов, чтобы он был в одной категории просмотра
+    STATUS_KEYS.forEach((key) => {
+      const arr = Array.isArray(user[key]) ? user[key] : [];
+      user[key] = arr.filter((id) => Number(id) !== numericId);
+    });
+
+    // Если выбран конкретный статус (не 'none'), добавляем в него
+    if (status && STATUS_KEYS.includes(status)) {
+      user[status] = [...user[status], numericId];
+    }
+
+    await user.save();
+
+    res.json({
+      watchlist: user.watchlist || [],
+      watching: user.watching || [],
+      completed: user.completed || [],
+      on_hold: user.on_hold || [],
+      dropped: user.dropped || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

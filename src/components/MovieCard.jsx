@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useFavorites } from '../context/FavoritesContext';
+import { useFavorites, WATCH_STATUSES } from '../context/FavoritesContext';
 import { RatingBadge } from './RatingBadge';
 
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -17,7 +17,9 @@ export function MovieCard({ movie, theme }) {
 
   const movieId = Number(movie.id);
   const isFavorite = state.favorites.includes(movieId);
-  const isInWatchlist = state.watchlist.includes(movieId);
+
+  const currentStatus =
+    WATCH_STATUSES.find((statusKey) => (state[statusKey] || []).includes(movieId)) || 'none';
 
   const posterUrl =
     movie.posterUrl ||
@@ -44,13 +46,10 @@ export function MovieCard({ movie, theme }) {
 
   const handleStatusChange = (e) => {
     e.stopPropagation();
-    const selectedStatus = e.target.value;
-
-    if (selectedStatus === 'watchlist' && !isInWatchlist) {
-      dispatch({ type: 'ADD_WATCHLIST', payload: movieId });
-    } else if (selectedStatus !== 'watchlist' && isInWatchlist) {
-      dispatch({ type: 'REMOVE_WATCHLIST', payload: movieId });
-    }
+    dispatch({
+      type: 'SET_STATUS',
+      payload: { movieId, status: e.target.value },
+    });
   };
 
   return (
@@ -97,30 +96,22 @@ export function MovieCard({ movie, theme }) {
           </button>
 
           <select
-            value={isInWatchlist ? 'watchlist' : 'none'}
+            value={currentStatus}
             onChange={handleStatusChange}
             onClick={(e) => e.stopPropagation()}
             aria-label="Статус просмотра"
             className={`w-full px-3 py-2 rounded-xl border text-xs font-medium outline-none transition-colors cursor-pointer ${
-              isInWatchlist
+              currentStatus !== 'none'
                 ? 'bg-blue-600/20 border-blue-500 text-blue-300'
                 : `${currentTheme.input} opacity-90 hover:opacity-100`
             }`}
           >
             <option value="none">+ Статус просмотра</option>
             <option value="watchlist">📌 Хочу посмотреть</option>
-            <option value="watching" disabled>
-              ▶ Смотрю (скоро)
-            </option>
-            <option value="completed" disabled>
-              ✅ Просмотрено (скоро)
-            </option>
-            <option value="on_hold" disabled>
-              ⏸ Отложено (скоро)
-            </option>
-            <option value="dropped" disabled>
-              ✖ Бросил (скоро)
-            </option>
+            <option value="watching">▶ Смотрю</option>
+            <option value="completed">✅ Просмотрено</option>
+            <option value="on_hold">⏸ Отложено</option>
+            <option value="dropped">✖ Бросил</option>
           </select>
         </div>
       </div>

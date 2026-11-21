@@ -5,13 +5,31 @@ import { useFavorites } from '../context/FavoritesContext';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
 
+const STATUS_SECTIONS = [
+  { key: 'watchlist', title: '📌 Хочу посмотреть' },
+  { key: 'watching', title: '▶ Смотрю' },
+  { key: 'completed', title: '✅ Просмотрено' },
+  { key: 'on_hold', title: '⏸ Отложено' },
+  { key: 'dropped', title: '✖ Бросил' },
+];
+
 export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
   const { state } = useFavorites();
   const [fetchedMap, setFetchedMap] = useState({});
   const [loading, setLoading] = useState(false);
 
   const apiLang = lang === 'en' ? 'en-US' : 'ru-RU';
-  const allIds = Array.from(new Set([...state.favorites, ...state.watchlist]));
+
+  const allIds = Array.from(
+    new Set([
+      ...(state.favorites || []),
+      ...(state.watchlist || []),
+      ...(state.watching || []),
+      ...(state.completed || []),
+      ...(state.on_hold || []),
+      ...(state.dropped || []),
+    ])
+  );
 
   useEffect(() => {
     const missingIds = allIds.filter(
@@ -56,12 +74,11 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
       release_date: '',
     };
 
-  const favoriteMovies = state.favorites.map(resolveMovie);
-  const watchlistMovies = state.watchlist.map(resolveMovie);
+  const favoriteMovies = (state.favorites || []).map(resolveMovie);
   const cardCls = currentTheme?.card || 'bg-gray-900 border-gray-800 text-white';
   const panelCls = currentTheme?.input || 'bg-gray-950/60 border-gray-800';
 
-  if (loading && favoriteMovies.length === 0 && watchlistMovies.length === 0) {
+  if (loading && allIds.length === 0) {
     return <div className="text-center py-12 opacity-70">Загрузка списков...</div>;
   }
 
@@ -76,7 +93,7 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
         </div>
       </div>
 
-      {favoriteMovies.length === 0 && watchlistMovies.length === 0 ? (
+      {allIds.length === 0 ? (
         <div className="text-center py-12 space-y-4">
           <p className="opacity-70 text-sm">
             Списки пока пусты. Добавьте фильмы на главной странице или в поиске.
@@ -89,7 +106,7 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="space-y-6">
           {/* Плашка 1: Избранное */}
           <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
             <div className="flex items-center justify-between">
@@ -97,33 +114,41 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
             </div>
 
             {favoriteMovies.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {favoriteMovies.map((movie) => (
                   <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
                 ))}
               </div>
             ) : (
-              <p className="opacity-60 text-xs py-6 text-center">В избранном пока пусто.</p>
+              <p className="opacity-60 text-xs py-4">В избранном пока пусто.</p>
             )}
           </section>
 
-          {/* Плашка 2: Хочу посмотреть */}
-          <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">📌 Хочу посмотреть ({watchlistMovies.length})</h2>
-            </div>
+          {/* Плашка 2: Категории просмотра */}
+          <section className={`border rounded-2xl p-5 space-y-6 ${panelCls}`}>
+            <h2 className="text-lg font-bold">📂 Категории просмотра</h2>
 
-            {watchlistMovies.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {watchlistMovies.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
-                ))}
-              </div>
-            ) : (
-              <p className="opacity-60 text-xs py-6 text-center">
-                Список «Хочу посмотреть» пока пуст.
-              </p>
-            )}
+            <div className="space-y-6">
+              {STATUS_SECTIONS.map((sec) => {
+                const list = (state[sec.key] || []).map(resolveMovie);
+                return (
+                  <div key={sec.key} className="space-y-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0">
+                    <h3 className="text-sm font-semibold">
+                      {sec.title} ({list.length})
+                    </h3>
+                    {list.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {list.map((movie) => (
+                          <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="opacity-50 text-xs">Пока пусто</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </section>
         </div>
       )}

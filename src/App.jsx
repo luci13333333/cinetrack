@@ -163,8 +163,22 @@ export default function App() {
   const [lang, setLang] = useState('ru');
   const t = translations[lang];
 
-  const [themeKey, setThemeKey] = useState('space');
-  const currentTheme = THEMES[themeKey] || THEMES.space;
+  const [themeKey, setThemeKey] = useState(() => {
+  try {
+    const savedTheme = localStorage.getItem('cinetrack_theme');
+    return savedTheme && THEMES[savedTheme] ? savedTheme : 'space';
+  } catch {
+    return 'space';
+  }});
+   const currentTheme = THEMES[themeKey] || THEMES.space;
+
+useEffect(() => {
+  try {
+    localStorage.setItem('cinetrack_theme', themeKey);
+  } catch (err) {
+    console.error('Ошибка сохранения темы в localStorage:', err);
+  }
+}, [themeKey]);
 
   const [genres, setGenres] = useState([]);
   const [knownMovies, setKnownMovies] = useState([]);
