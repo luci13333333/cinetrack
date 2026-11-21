@@ -218,3 +218,32 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
+
+apiRouter.get('/watchlist', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    res.json(user ? user.watchlist || [] : []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/watchlist', verifyToken, async (req, res) => {
+  try {
+    const { movieId } = req.body;
+    const numericId = Number(movieId);
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    const current = Array.isArray(user.watchlist) ? user.watchlist : [];
+    if (current.includes(numericId)) {
+      user.watchlist = current.filter((id) => id !== numericId);
+    } else {
+      user.watchlist = [...current, numericId];
+    }
+    await user.save();
+    res.json(user.watchlist);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

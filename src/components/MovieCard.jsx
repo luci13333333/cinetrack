@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useFavorites } from '../context/FavoritesContext';
 import { RatingBadge } from './RatingBadge';
 
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+const FALLBACK_POSTER =
+  'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
 
-export function MovieCard({ movie, isFavorite, onToggleFavorite, onCardClick, theme }) {
-  const [localLiked, setLocalLiked] = useState(false);
+export function MovieCard({ movie, theme }) {
+  const { state, dispatch } = useFavorites();
 
   const currentTheme = theme || {
     card: 'bg-gray-900 border-gray-800 text-white',
+    input: 'bg-gray-950 border-gray-800 text-white',
   };
+
+  const movieId = Number(movie.id);
+  const isFavorite = state.favorites.includes(movieId);
+  const isInWatchlist = state.watchlist.includes(movieId);
 
   const posterUrl =
     movie.posterUrl ||
-    (movie.poster_path
-      ? `${IMG_BASE}${movie.poster_path}`
-      : 'https://via.placeholder.com/500x750?text=No+Poster');
+    (movie.poster_path ? `${IMG_BASE}${movie.poster_path}` : FALLBACK_POSTER);
 
   const rawRating =
     movie.rating !== undefined
@@ -25,33 +31,32 @@ export function MovieCard({ movie, isFavorite, onToggleFavorite, onCardClick, th
       : '—';
 
   const year =
-    movie.year ||
-    (movie.release_date ? movie.release_date.slice(0, 4) : 'Год неизвестен');
+    movie.year || (movie.release_date ? movie.release_date.slice(0, 4) : 'Год неизвестен');
 
-  const liked = typeof isFavorite === 'boolean' ? isFavorite : localLiked;
-
-  const handleHeartClick = (e) => {
+  const handleToggleFavorite = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onToggleFavorite) {
-      onToggleFavorite(movie.id);
-    } else {
-      setLocalLiked((prev) => !prev);
-    }
+    dispatch({
+      type: isFavorite ? 'REMOVE_FAVORITE' : 'ADD_FAVORITE',
+      payload: movieId,
+    });
+  };
+
+  const handleToggleWatchlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch({
+      type: isInWatchlist ? 'REMOVE_WATCHLIST' : 'ADD_WATCHLIST',
+      payload: movieId,
+    });
   };
 
   return (
     <div
-      onClick={onCardClick}
-      className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors ${
-        onCardClick ? 'cursor-pointer' : ''
-      } ${currentTheme.card}`}
+      className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors ${currentTheme.card}`}
     >
       <Link
         to={`/movie/${movie.id}`}
-        onClick={(e) => {
-          if (onCardClick) e.stopPropagation();
-        }}
         className="block relative aspect-[2/3] overflow-hidden bg-gray-950"
       >
         <img
@@ -65,13 +70,10 @@ export function MovieCard({ movie, isFavorite, onToggleFavorite, onCardClick, th
         </div>
       </Link>
 
-      <div className="p-4 flex items-start justify-between gap-2">
+      <div className="p-4 flex flex-col gap-3">
         <div className="min-w-0">
           <Link
             to={`/movie/${movie.id}`}
-            onClick={(e) => {
-              if (onCardClick) e.stopPropagation();
-            }}
             className="font-semibold text-sm hover:text-blue-400 line-clamp-1 transition-colors"
           >
             {movie.title}
@@ -79,18 +81,31 @@ export function MovieCard({ movie, isFavorite, onToggleFavorite, onCardClick, th
           <p className="text-xs opacity-70 mt-1">{year}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleHeartClick}
-          aria-label="Лайк"
-          className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-xs transition-colors cursor-pointer ${
-            liked
-              ? 'bg-rose-600/20 border-rose-500 text-rose-400'
-              : 'bg-gray-950/60 border-gray-800 text-gray-400 hover:text-white'
-          }`}
-        >
-          {liked ? '♥' : '♡'}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+              isFavorite
+                ? 'bg-rose-600/20 border-rose-500 text-rose-300 hover:bg-rose-600/30'
+                : `${currentTheme.input} opacity-85 hover:opacity-100`
+            }`}
+          >
+            {isFavorite ? '♥ В избранном' : '♡ В избранное'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleWatchlist}
+            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+              isInWatchlist
+                ? 'bg-blue-600/20 border-blue-500 text-blue-300 hover:bg-blue-600/30'
+                : `${currentTheme.input} opacity-85 hover:opacity-100`
+            }`}
+          >
+            {isInWatchlist ? '✓ Хочу посмотреть' : '+ Хочу посмотреть'}
+          </button>
+        </div>
       </div>
     </div>
   );
