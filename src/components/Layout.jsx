@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useFavorites } from '../context/FavoritesContext';
 
 export function Layout({
   t,
@@ -11,28 +12,25 @@ export function Layout({
   currentTheme,
   user,
   userInitials,
-  favoritesCount = 0,
   onOpenAuth,
   onLogout,
   toastMessage,
 }) {
   const navigate = useNavigate();
+  const { state } = useFavorites();
+  const favoritesCount = state.favorites.length;
+  const watchlistCount = state.watchlist.length;
+
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const navLinkClass = ({ isActive }) =>
-    `px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+    `px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2 ${
       isActive
         ? `${currentTheme?.accentBg || 'bg-blue-600'} text-white`
         : 'opacity-75 hover:opacity-100'
@@ -73,7 +71,17 @@ export function Layout({
                 Поиск
               </NavLink>
               <NavLink to="/favorites" className={navLinkClass}>
-                {t?.favorites || 'Избранное'} ({favoritesCount})
+                <span>Мои списки</span>
+                {favoritesCount > 0 && (
+                  <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs font-bold">
+                    ♥ {favoritesCount}
+                  </span>
+                )}
+                {watchlistCount > 0 && (
+                  <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs font-bold">
+                    📌 {watchlistCount}
+                  </span>
+                )}
               </NavLink>
             </nav>
           </div>
@@ -112,7 +120,8 @@ export function Layout({
                 <button
                   type="button"
                   onClick={() => navigate('/profile')}
-                  className="flex items-center gap-2 cursor-pointer"
+                  title="Открыть профиль"
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   {user.avatar ? (
                     <img
@@ -163,7 +172,7 @@ export function Layout({
       {showScrollTop && (
         <button
           type="button"
-          onClick={scrollToTop}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           aria-label="Наверх"
           className={`fixed bottom-6 right-6 z-40 ${
             currentTheme?.accentBg || 'bg-blue-600 hover:bg-blue-500'

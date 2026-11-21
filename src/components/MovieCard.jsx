@@ -42,13 +42,15 @@ export function MovieCard({ movie, theme }) {
     });
   };
 
-  const handleToggleWatchlist = (e) => {
-    e.preventDefault();
+  const handleStatusChange = (e) => {
     e.stopPropagation();
-    dispatch({
-      type: isInWatchlist ? 'REMOVE_WATCHLIST' : 'ADD_WATCHLIST',
-      payload: movieId,
-    });
+    const selectedStatus = e.target.value;
+
+    if (selectedStatus === 'watchlist' && !isInWatchlist) {
+      dispatch({ type: 'ADD_WATCHLIST', payload: movieId });
+    } else if (selectedStatus !== 'watchlist' && isInWatchlist) {
+      dispatch({ type: 'REMOVE_WATCHLIST', payload: movieId });
+    }
   };
 
   return (
@@ -94,17 +96,32 @@ export function MovieCard({ movie, theme }) {
             {isFavorite ? '♥ В избранном' : '♡ В избранное'}
           </button>
 
-          <button
-            type="button"
-            onClick={handleToggleWatchlist}
-            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+          <select
+            value={isInWatchlist ? 'watchlist' : 'none'}
+            onChange={handleStatusChange}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Статус просмотра"
+            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium outline-none transition-colors cursor-pointer ${
               isInWatchlist
-                ? 'bg-blue-600/20 border-blue-500 text-blue-300 hover:bg-blue-600/30'
-                : `${currentTheme.input} opacity-85 hover:opacity-100`
+                ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                : `${currentTheme.input} opacity-90 hover:opacity-100`
             }`}
           >
-            {isInWatchlist ? '✓ Хочу посмотреть' : '+ Хочу посмотреть'}
-          </button>
+            <option value="none">+ Статус просмотра</option>
+            <option value="watchlist">📌 Хочу посмотреть</option>
+            <option value="watching" disabled>
+              ▶ Смотрю (скоро)
+            </option>
+            <option value="completed" disabled>
+              ✅ Просмотрено (скоро)
+            </option>
+            <option value="on_hold" disabled>
+              ⏸ Отложено (скоро)
+            </option>
+            <option value="dropped" disabled>
+              ✖ Бросил (скоро)
+            </option>
+          </select>
         </div>
       </div>
     </div>

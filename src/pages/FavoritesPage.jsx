@@ -6,7 +6,7 @@ import { useFavorites } from '../context/FavoritesContext';
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
 
 export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
-  const { state, dispatch } = useFavorites();
+  const { state } = useFavorites();
   const [fetchedMap, setFetchedMap] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -58,73 +58,75 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
 
   const favoriteMovies = state.favorites.map(resolveMovie);
   const watchlistMovies = state.watchlist.map(resolveMovie);
+  const cardCls = currentTheme?.card || 'bg-gray-900 border-gray-800 text-white';
+  const panelCls = currentTheme?.input || 'bg-gray-950/60 border-gray-800';
 
   if (loading && favoriteMovies.length === 0 && watchlistMovies.length === 0) {
     return <div className="text-center py-12 opacity-70">Загрузка списков...</div>;
   }
 
-  if (favoriteMovies.length === 0 && watchlistMovies.length === 0) {
-    return (
-      <div className="text-center py-16 space-y-4">
-        <h1 className="text-2xl font-bold">Избранное и «Хочу посмотреть»</h1>
-        <p className="opacity-70 text-sm">
-          Списки пока пусты. Добавьте фильмы на главной странице или в поиске.
-        </p>
-        <Link
-          to="/"
-          className="inline-block bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-colors"
-        >
-          На главную
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-12">
-      <section className="space-y-5">
-        <h1 className="text-2xl font-bold">❤️ Избранное ({favoriteMovies.length})</h1>
-        {favoriteMovies.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {favoriteMovies.map((movie) => (
-              <div key={movie.id} className="flex flex-col gap-2">
-                <MovieCard movie={movie} theme={currentTheme} />
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'REMOVE_FAVORITE', payload: movie.id })}
-                  className="w-full px-3 py-2 rounded-xl border border-rose-500/40 bg-rose-600/15 hover:bg-rose-600/25 text-rose-300 text-xs font-medium transition-colors cursor-pointer"
-                >
-                  Удалить из избранного
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="opacity-60 text-sm">В избранном пока нет фильмов.</p>
-        )}
-      </section>
+    <div className={`border rounded-3xl p-6 space-y-8 shadow-xl ${cardCls}`}>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Мои списки</h1>
+          <p className="text-xs opacity-70 mt-1">
+            Категории фильмов, сохранённые в вашем аккаунте
+          </p>
+        </div>
+      </div>
 
-      <section className="space-y-5">
-        <h2 className="text-2xl font-bold">📌 Хочу посмотреть ({watchlistMovies.length})</h2>
-        {watchlistMovies.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {watchlistMovies.map((movie) => (
-              <div key={movie.id} className="flex flex-col gap-2">
-                <MovieCard movie={movie} theme={currentTheme} />
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'REMOVE_WATCHLIST', payload: movie.id })}
-                  className="w-full px-3 py-2 rounded-xl border border-blue-500/40 bg-blue-600/15 hover:bg-blue-600/25 text-blue-300 text-xs font-medium transition-colors cursor-pointer"
-                >
-                  Убрать из «Хочу посмотреть»
-                </button>
+      {favoriteMovies.length === 0 && watchlistMovies.length === 0 ? (
+        <div className="text-center py-12 space-y-4">
+          <p className="opacity-70 text-sm">
+            Списки пока пусты. Добавьте фильмы на главной странице или в поиске.
+          </p>
+          <Link
+            to="/"
+            className="inline-block bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-colors"
+          >
+            На главную
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Плашка 1: Избранное */}
+          <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">♥ Избранное ({favoriteMovies.length})</h2>
+            </div>
+
+            {favoriteMovies.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {favoriteMovies.map((movie) => (
+                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="opacity-60 text-sm">Список «Хочу посмотреть» пока пуст.</p>
-        )}
-      </section>
+            ) : (
+              <p className="opacity-60 text-xs py-6 text-center">В избранном пока пусто.</p>
+            )}
+          </section>
+
+          {/* Плашка 2: Хочу посмотреть */}
+          <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">📌 Хочу посмотреть ({watchlistMovies.length})</h2>
+            </div>
+
+            {watchlistMovies.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {watchlistMovies.map((movie) => (
+                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
+                ))}
+              </div>
+            ) : (
+              <p className="opacity-60 text-xs py-6 text-center">
+                Список «Хочу посмотреть» пока пуст.
+              </p>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }
