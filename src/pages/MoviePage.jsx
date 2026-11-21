@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useFetch } from '../hooks/useFetch.js';
+import { useFetch } from '../hooks/useFetch';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
