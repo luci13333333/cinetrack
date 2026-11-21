@@ -1,37 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-export function MovieCard({ movie, isFavorite, onToggleFavorite, onCardClick, theme }) {
-  const currentTheme = theme || {
-    card: 'bg-slate-900 border-slate-800 text-slate-100',
-    accentText: 'text-indigo-400',
-  };
+const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+export function MovieCard({ movie }) {
+  const [liked, setLiked] = useState(false);
+
+  const posterUrl = movie.poster_path
+    ? `${IMG_BASE}${movie.poster_path}`
+    : 'https://via.placeholder.com/500x750?text=No+Poster';
 
   return (
-    <div 
-      onClick={onCardClick}
-      className={`group relative rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col ${currentTheme.card}`}
-    >
-      <div className="relative aspect-[2/3] overflow-hidden">
-        <img 
-          src={movie.posterUrl} 
-          alt={movie.title} 
+    <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors">
+      <Link
+        to={`/movie/${movie.id}`}
+        className="block relative aspect-[2/3] overflow-hidden bg-gray-950"
+      >
+        <img
+          src={posterUrl}
+          alt={movie.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
         />
+        <span className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-400">
+          ★ {typeof movie.vote_average === 'number' ? movie.vote_average.toFixed(1) : '—'}
+        </span>
+      </Link>
+
+      <div className="p-4 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <Link
+            to={`/movie/${movie.id}`}
+            className="font-semibold text-sm text-white hover:text-blue-400 line-clamp-1 transition-colors"
+          >
+            {movie.title}
+          </Link>
+          <p className="text-xs text-gray-400 mt-1">
+            {movie.release_date ? movie.release_date.slice(0, 4) : 'Год неизвестен'}
+          </p>
+        </div>
+
         <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(movie.id); }}
-          className="absolute top-3 right-3 bg-black/60 backdrop-blur-md p-2 rounded-xl text-lg hover:scale-110 transition-transform cursor-pointer"
+          type="button"
+          onClick={() => setLiked((prev) => !prev)}
+          aria-label="Лайк"
+          className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-xs transition-colors ${
+            liked
+              ? 'bg-rose-600/20 border-rose-500 text-rose-400'
+              : 'bg-gray-950 border-gray-800 text-gray-400 hover:text-white'
+          }`}
         >
-          {isFavorite ? '❤️' : '🤍'}
+          {liked ? '♥' : '♡'}
         </button>
-        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-yellow-400">
-          ★ {movie.rating}
-        </div>
-      </div>
-      <div className="p-4 flex flex-col flex-grow justify-between">
-        <div>
-          <h3 className="font-bold text-sm line-clamp-1 mb-1">{movie.title}</h3>
-          <p className="text-xs opacity-70">{movie.year}</p>
-        </div>
       </div>
     </div>
   );
