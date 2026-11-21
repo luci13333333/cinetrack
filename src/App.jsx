@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { AuthModal } from './components/AuthModal';
 import { Layout } from './components/Layout';
-import { MovieModal } from './components/MovieModal';
+import { FavoritesProvider } from './context/FavoritesContext';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { HomePage } from './pages/HomePage';
 import { MoviePage } from './pages/MoviePage';
@@ -10,7 +10,8 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const TMDB_API_KEY =
+  import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
 const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 
 const translations = {
@@ -158,7 +159,6 @@ export default function App() {
   const navigate = useNavigate();
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState(null);
 
   const [lang, setLang] = useState('ru');
   const t = translations[lang];
@@ -177,11 +177,9 @@ export default function App() {
   });
 
   const [profileName, setProfileName] = useState(user?.name || '');
-  const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profileAvatar, setProfileAvatar] = useState(user?.avatar || '');
   const [profileColor, setProfileColor] = useState(user?.color || 'bg-blue-600');
 
-  const [favorites, setFavorites] = useState([]);
   const [movieReviewsMap, setMovieReviewsMap] = useState({});
 
   const showToast = (text) => {
@@ -210,7 +208,6 @@ export default function App() {
           const data = await res.json();
           setUser(data.user);
           setProfileName(data.user.name || '');
-          setProfileEmail(data.user.email || '');
           setProfileAvatar(data.user.avatar || '');
           setProfileColor(data.user.color || 'bg-blue-600');
           sessionStorage.setItem('cinetrack_user', JSON.stringify(data.user));
@@ -225,10 +222,10 @@ export default function App() {
       }
     };
 
-    if (token && !user) {
+    if (token) {
       verifyToken();
     }
-  }, [token, user]);
+  }, [token]);
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -248,32 +245,20 @@ export default function App() {
   }, [lang]);
 
   useEffect(() => {
-    const loadServerData = async () => {
+    const loadReviews = async () => {
       try {
         const resReviews = await fetch(`${API_URL}/reviews`);
         if (resReviews.ok) {
           const reviewsData = await resReviews.json();
           setMovieReviewsMap(buildReviewsMap(reviewsData));
         }
-
-        if (token) {
-          const resFavs = await fetch(`${API_URL}/favorites`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (resFavs.ok) {
-            const favsData = await resFavs.json();
-            setFavorites(favsData);
-          }
-        } else {
-          setFavorites([]);
-        }
       } catch (err) {
-        console.error('Ошибка бэкенда:', err);
+        console.error('Ошибка загрузки отзывов:', err);
       }
     };
 
-    loadServerData();
-  }, [token]);
+    loadReviews();
+  }, []);
 
   const handleLogin = (newToken, userData) => {
     sessionStorage.setItem('cinetrack_token', newToken);
@@ -281,7 +266,6 @@ export default function App() {
     setToken(newToken);
     setUser(userData);
     setProfileName(userData.name || '');
-    setProfileEmail(userData.email || '');
     setProfileAvatar(userData.avatar || '');
     setProfileColor(userData.color || 'bg-blue-600');
     showToast(`Добро пожаловать, ${userData.name}!`);
@@ -292,7 +276,6 @@ export default function App() {
     sessionStorage.removeItem('cinetrack_user');
     setToken(null);
     setUser(null);
-    setFavorites([]);
     navigate('/');
     showToast('Вы вышли из аккаунта');
   };
@@ -307,7 +290,11 @@ export default function App() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: profileName, avatar: profileAvatar, color: profileColor }),
+        body: JSON.stringify({
+          name: profileName,
+          avatar: profileAvatar,
+          color: profileColor,
+        }),
       });
 
       if (res.ok) {
@@ -318,31 +305,6 @@ export default function App() {
       }
     } catch (err) {
       console.error('Ошибка сохранения профиля:', err);
-    }
-  };
-
-  const toggleFavorite = async (movieId) => {
-    if (!token) {
-      setIsAuthOpen(true);
-      showToast('Войдите, чтобы добавлять в избранное');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/favorites`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ movieId }),
-      });
-      if (res.ok) {
-        const updatedFavs = await res.json();
-        setFavorites(updatedFavs);
-      }
-    } catch (err) {
-      console.error('Ошибка избранного:', err);
     }
   };
 
@@ -370,17 +332,19 @@ export default function App() {
         }),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        sessionStorage.removeItem('cinetrack_token');
+        sessionStorage.removeItem('cinetrack_user');
+        setToken(null);
+        setUser(null);
+        setIsAuthOpen(true);
+        showToast('Сессия истекла, войдите заново');
+        return;
+      }
+
       if (res.ok) {
         const allReviewsList = await res.json();
-        const formattedMap = buildReviewsMap(allReviewsList);
-        setMovieReviewsMap(formattedMap);
-
-        const currentSaved = formattedMap[updatedMovie.id];
-        setSelectedMovie({
-          ...updatedMovie,
-          reviews: currentSaved ? currentSaved.reviews : [],
-          rating: currentSaved ? currentSaved.rating : updatedMovie.rating,
-        });
+        setMovieReviewsMap(buildReviewsMap(allReviewsList));
         showToast('Отзыв успешно сохранен в БД!');
       }
     } catch (err) {
@@ -414,13 +378,16 @@ export default function App() {
   const avgUserRating =
     userReviewsCount > 0
       ? (
-          allUserReviews.reduce((acc, r) => acc + Number(r.rating || 0), 0) / userReviewsCount
+          allUserReviews.reduce((acc, r) => acc + Number(r.rating || 0), 0) /
+          userReviewsCount
         ).toFixed(1)
       : '0.0';
 
   const favoriteGenreName = (() => {
     const genreCounts = {};
-    const targetMovieIds = [...new Set([...favorites, ...allUserReviews.map((r) => r.movie_id)])];
+    const targetMovieIds = [
+      ...new Set(allUserReviews.map((r) => r.movie_id)),
+    ];
 
     targetMovieIds.forEach((mId) => {
       const foundMovie = knownMovies.find((m) => m.id === mId);
@@ -431,7 +398,9 @@ export default function App() {
       }
     });
 
-    const topGenreId = Object.keys(genreCounts).sort((a, b) => genreCounts[b] - genreCounts[a])[0];
+    const topGenreId = Object.keys(genreCounts).sort(
+      (a, b) => genreCounts[b] - genreCounts[a]
+    )[0];
     const foundGenreObj = genres.find((g) => g.id === Number(topGenreId));
     return foundGenreObj ? foundGenreObj.name : 'Не определен';
   })();
@@ -446,7 +415,11 @@ export default function App() {
     : 'U';
 
   return (
-    <>
+    <FavoritesProvider
+      token={token}
+      onRequireAuth={() => setIsAuthOpen(true)}
+      onNotify={showToast}
+    >
       <Routes>
         <Route
           path="/"
@@ -461,7 +434,6 @@ export default function App() {
               currentTheme={currentTheme}
               user={user}
               userInitials={userInitials}
-              favoritesCount={favorites.length}
               onOpenAuth={() => setIsAuthOpen(true)}
               onLogout={handleLogout}
               toastMessage={toastMessage}
@@ -476,10 +448,7 @@ export default function App() {
                 lang={lang}
                 genres={genres}
                 currentTheme={currentTheme}
-                favorites={favorites}
                 movieReviewsMap={movieReviewsMap}
-                onToggleFavorite={toggleFavorite}
-                onOpenMovieModal={setSelectedMovie}
                 onMoviesLoaded={handleMoviesLoaded}
               />
             }
@@ -491,10 +460,7 @@ export default function App() {
                 t={t}
                 lang={lang}
                 currentTheme={currentTheme}
-                favorites={favorites}
                 movieReviewsMap={movieReviewsMap}
-                onToggleFavorite={toggleFavorite}
-                onOpenMovieModal={setSelectedMovie}
               />
             }
           />
@@ -504,9 +470,10 @@ export default function App() {
               <MoviePage
                 lang={lang}
                 currentTheme={currentTheme}
-                favorites={favorites}
+                user={user}
                 movieReviewsMap={movieReviewsMap}
-                onToggleFavorite={toggleFavorite}
+                onUpdateMovie={handleUpdateMovie}
+                onDeleteReview={handleDeleteReview}
               />
             }
           />
@@ -514,12 +481,9 @@ export default function App() {
             path="favorites"
             element={
               <FavoritesPage
+                lang={lang}
                 currentTheme={currentTheme}
-                favorites={favorites}
                 knownMovies={knownMovies}
-                movieReviewsMap={movieReviewsMap}
-                onToggleFavorite={toggleFavorite}
-                onOpenMovieModal={setSelectedMovie}
               />
             }
           />
@@ -543,17 +507,7 @@ export default function App() {
                 avgUserRating={avgUserRating}
                 favoriteGenreName={favoriteGenreName}
                 onDeleteReview={handleDeleteReview}
-                onSelectMovieFromReview={(rev) => {
-                  const foundMovie = knownMovies.find((m) => m.id === rev.movie_id) || {
-                    id: rev.movie_id,
-                    title: rev.movie_title,
-                    posterUrl: rev.movie_poster,
-                    rating: movieReviewsMap[rev.movie_id]?.rating || 0,
-                    overview: '',
-                    reviews: movieReviewsMap[rev.movie_id]?.reviews || [],
-                  };
-                  setSelectedMovie(foundMovie);
-                }}
+                onSelectMovieFromReview={(rev) => navigate(`/movie/${rev.movie_id}`)}
               />
             }
           />
@@ -562,27 +516,11 @@ export default function App() {
         </Route>
       </Routes>
 
-      <MovieModal
-        movie={selectedMovie}
-        isOpen={!!selectedMovie}
-        onClose={() => setSelectedMovie(null)}
-        user={user}
-        onUpdateMovie={handleUpdateMovie}
-        onDeleteReview={handleDeleteReview}
-        isFavorite={selectedMovie ? favorites.includes(selectedMovie.id) : false}
-        onToggleFavorite={toggleFavorite}
-        theme={currentTheme}
-        onSelectMovie={(movieObj) => {
-          const saved = movieReviewsMap[movieObj.id];
-          setSelectedMovie({
-            ...movieObj,
-            rating: saved ? saved.rating : movieObj.rating,
-            reviews: saved ? saved.reviews : [],
-          });
-        }}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLogin={handleLogin}
       />
-
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLogin={handleLogin} />
-    </>
+    </FavoritesProvider>
   );
 }
