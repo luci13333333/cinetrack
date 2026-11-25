@@ -5,30 +5,55 @@ import { useFavorites } from '../context/FavoritesContext';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-const STATUS_SECTIONS = [
-  { key: 'watchlist', ruTitle: '📌 Хочу посмотреть', enTitle: '📌 Plan to Watch' },
-  { key: 'watching', ruTitle: '▶ Смотрю', enTitle: '▶ Watching' },
-  { key: 'completed', ruTitle: '✅ Просмотрено', enTitle: '✅ Completed' },
-  { key: 'on_hold', ruTitle: '⏸ Отложено', enTitle: '⏸ On Hold' },
-  { key: 'dropped', ruTitle: '✖ Бросил', enTitle: '✖ Dropped' },
+const LIST_TABS = [
+  {
+    key: 'favorites',
+    ruTitle: '♥ Избранное',
+    enTitle: '♥ Favorites',
+    emptyTextKey: 'favoritesEmpty',
+  },
+  {
+    key: 'watchlist',
+    ruTitle: '📌 Хочу посмотреть',
+    enTitle: '📌 Plan to Watch',
+    emptyTextKey: 'sectionEmpty',
+  },
+  {
+    key: 'watching',
+    ruTitle: '▶ Смотрю',
+    enTitle: '▶ Watching',
+    emptyTextKey: 'sectionEmpty',
+  },
+  {
+    key: 'completed',
+    ruTitle: '✅ Просмотрено',
+    enTitle: '✅ Completed',
+    emptyTextKey: 'sectionEmpty',
+  },
+  {
+    key: 'on_hold',
+    ruTitle: '⏸ Отложено',
+    enTitle: '⏸ On Hold',
+    emptyTextKey: 'sectionEmpty',
+  },
+  {
+    key: 'dropped',
+    ruTitle: '✖ Бросил',
+    enTitle: '✖ Dropped',
+    emptyTextKey: 'sectionEmpty',
+  },
 ];
 
 export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }) {
   const { state } = useFavorites();
+  const [activeTab, setActiveTab] = useState('favorites');
   const [fetchedMap, setFetchedMap] = useState({});
   const [loading, setLoading] = useState(false);
 
   const apiLang = lang === 'en' ? 'en-US' : 'ru-RU';
 
   const allIds = Array.from(
-    new Set([
-      ...(state.favorites || []),
-      ...(state.watchlist || []),
-      ...(state.watching || []),
-      ...(state.completed || []),
-      ...(state.on_hold || []),
-      ...(state.dropped || []),
-    ])
+    new Set(LIST_TABS.flatMap((tab) => state[tab.key] || []))
   );
 
   useEffect(() => {
@@ -74,9 +99,20 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
       release_date: '',
     };
 
-  const favoriteMovies = (state.favorites || []).map(resolveMovie);
   const cardCls = currentTheme?.card || 'bg-gray-900 border-gray-800 text-white';
   const panelCls = currentTheme?.input || 'bg-gray-950/60 border-gray-800';
+  const accentBgCls = currentTheme?.accentBg || 'bg-blue-600 hover:bg-blue-500';
+
+  const currentTabConfig =
+    LIST_TABS.find((tab) => tab.key === activeTab) || LIST_TABS[0];
+  const currentTabTitle =
+    lang === 'en' ? currentTabConfig.enTitle : currentTabConfig.ruTitle;
+  const currentTabMovies = (state[currentTabConfig.key] || []).map(resolveMovie);
+  const currentTabEmptyText =
+    t?.[currentTabConfig.emptyTextKey] ||
+    (currentTabConfig.key === 'favorites'
+      ? 'В избранном пока пусто.'
+      : 'Пока пусто');
 
   if (loading && allIds.length === 0) {
     return (
@@ -87,7 +123,7 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
   }
 
   return (
-    <div className={`border rounded-3xl p-6 space-y-8 shadow-xl ${cardCls}`}>
+    <div className={`border rounded-3xl p-6 space-y-6 shadow-xl ${cardCls}`}>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <h1 className="text-2xl font-bold">{t?.listsTitle || 'Мои списки'}</h1>
@@ -95,6 +131,43 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
             {t?.listsSubtitle || 'Категории фильмов, сохранённые в вашем аккаунте'}
           </p>
         </div>
+      </div>
+
+      {/* Панель вкладок-переключателей между списками */}
+      <div
+        role="tablist"
+        aria-label={t?.listsTitle || 'Мои списки'}
+        className="flex flex-wrap gap-2 border-b border-white/10 pb-4"
+      >
+        {LIST_TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
+          const count = (state[tab.key] || []).length;
+          const label = lang === 'en' ? tab.enTitle : tab.ruTitle;
+
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all inline-flex items-center gap-2 cursor-pointer ${
+                isActive
+                  ? `${accentBgCls} border-transparent text-white shadow-md`
+                  : `${panelCls} opacity-80 hover:opacity-100`
+              }`}
+            >
+              <span>{label}</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  isActive ? 'bg-black/25' : 'bg-black/30 opacity-85'
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {allIds.length === 0 ? (
@@ -111,63 +184,23 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Плашка 1: Избранное */}
-          <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">
-                ♥ {t?.favorites || 'Избранное'} ({favoriteMovies.length})
-              </h2>
-            </div>
-
-            {favoriteMovies.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {favoriteMovies.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} />
-                ))}
-              </div>
-            ) : (
-              <p className="opacity-60 text-xs py-4">
-                {t?.favoritesEmpty || 'В избранном пока пусто.'}
-              </p>
-            )}
-          </section>
-
-          {/* Плашка 2: Категории просмотра */}
-          <section className={`border rounded-2xl p-5 space-y-6 ${panelCls}`}>
+        <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-bold">
-              {t?.statusCategoriesTitle || '📂 Категории просмотра'}
+              {currentTabTitle} ({currentTabMovies.length})
             </h2>
+          </div>
 
-            <div className="space-y-6">
-              {STATUS_SECTIONS.map((sec) => {
-                const list = (state[sec.key] || []).map(resolveMovie);
-                const sectionTitle = lang === 'en' ? sec.enTitle : sec.ruTitle;
-                return (
-                  <div
-                    key={sec.key}
-                    className="space-y-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0"
-                  >
-                    <h3 className="text-sm font-semibold">
-                      {sectionTitle} ({list.length})
-                    </h3>
-                    {list.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {list.map((movie) => (
-                          <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="opacity-50 text-xs">
-                        {t?.sectionEmpty || 'Пока пусто'}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+          {currentTabMovies.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {currentTabMovies.map((movie) => (
+                <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} />
+              ))}
             </div>
-          </section>
-        </div>
+          ) : (
+            <p className="opacity-60 text-sm py-6 text-center">{currentTabEmptyText}</p>
+          )}
+        </section>
       )}
     </div>
   );
