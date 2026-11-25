@@ -6,8 +6,71 @@ import { useFetch } from '../hooks/useFetch';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+const LOGO_BASE = 'https://image.tmdb.org/t/p/w92';
 const FALLBACK_POSTER =
   'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
+
+function buildProviderUrl(providerName, movieTitle, fallbackLink) {
+  const encodedTitle = encodeURIComponent(movieTitle || '');
+  const lower = (providerName || '').toLowerCase();
+
+  if (lower.includes('netflix')) {
+    return `https://www.netflix.com/search?q=${encodedTitle}`;
+  }
+  if (lower.includes('prime video') || lower.includes('amazon')) {
+    return `https://www.amazon.com/s?k=${encodedTitle}&i=instant-video`;
+  }
+  if (lower.includes('apple tv')) {
+    return `https://tv.apple.com/search?term=${encodedTitle}`;
+  }
+  if (lower.includes('disney')) {
+    return `https://www.disneyplus.com/search?q=${encodedTitle}`;
+  }
+  if (lower.includes('youtube')) {
+    return `https://www.youtube.com/results?search_query=${encodedTitle}`;
+  }
+  if (lower.includes('google play')) {
+    return `https://play.google.com/store/search?q=${encodedTitle}&c=movies`;
+  }
+  if (lower.includes('kinopoisk') || lower.includes('кинопоиск')) {
+    return `https://www.kinopoisk.ru/index.php?kp_query=${encodedTitle}`;
+  }
+  if (lower.includes('okko')) {
+    return `https://okko.tv/search/${encodedTitle}`;
+  }
+  if (lower.includes('ivi') || lower.includes('иви')) {
+    return `https://www.ivi.ru/search/?q=${encodedTitle}`;
+  }
+  if (lower.includes('wink')) {
+    return `https://wink.ru/search?q=${encodedTitle}`;
+  }
+
+  return fallbackLink || `https://www.google.com/search?q=${encodeURIComponent(`${movieTitle} смотреть онлайн`)}`;
+}
+
+function extractProviders(regionData, movieTitle) {
+  if (!regionData) return [];
+
+  const merged = [
+    ...(regionData.flatrate || []),
+    ...(regionData.free || []),
+    ...(regionData.ads || []),
+    ...(regionData.rent || []),
+    ...(regionData.buy || []),
+  ];
+
+  const uniqueMap = new Map();
+  merged.forEach((p) => {
+    if (p?.provider_id && !uniqueMap.has(p.provider_id)) {
+      uniqueMap.set(p.provider_id, {
+        ...p,
+        href: buildProviderUrl(p.provider_name, movieTitle, regionData.link),
+      });
+    }
+  });
+
+  return Array.from(uniqueMap.values()).slice(0, 8);
+}
 
 export function MoviePage({
   t,
@@ -42,6 +105,7 @@ export function MoviePage({
   const [trailerKey, setTrailerKey] = useState(null);
   const [similarMovies, setSimilarMovies] = useState([]);
   const [collectionMovies, setCollectionMovies] = useState([]);
+  const [providers, setProviders] = useState([]);
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(10);
   const [editingReviewId, setEditingReviewId] = useState(null);
@@ -53,6 +117,7 @@ export function MoviePage({
     setTrailerKey(null);
     setSimilarMovies([]);
     setCollectionMovies([]);
+    setProviders([]);
     if (hash !== '#reviews') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -64,7 +129,7 @@ export function MoviePage({
 
     const fetchExtraData = async () => {
       try {
-        const [videoRes, simRes] = await Promise.all([
+        const [videoRes, simRes, provRes] = await Promise.all([
           fetch(
             `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${API_KEY}&language=${apiLang}`,
             { signal: controller.signal }
@@ -73,6 +138,9 @@ export function MoviePage({
             `https://api.themoviedb.org/3/movie/${id}/similar?api_key=${API_KEY}&language=${apiLang}`,
             { signal: controller.signal }
           ),
+          fetch(`https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${API_KEY}`, {
+            signal: controller.signal,
+          }),
         ]);
 
         const videoData = await videoRes.json();
@@ -94,16 +162,27 @@ export function MoviePage({
 
         const simData = await simRes.json();
         setSimilarMovies((simData.results || []).slice(0, 4));
+
+        const provData = await provRes.json();
+        const regionResults = provData?.results || {};
+        const preferredRegion = lang === 'en' ? 'US' : 'RU';
+        const regionPayload =
+          regionResults[preferredRegion] ||
+          regionResults.RU ||
+          regionResults.US ||
+          regionResults.GB ||
+          null;
+        setProviders(extractProviders(regionPayload, movie?.title));
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Ошибка загрузки трейлера и похожих фильмов:', err);
+          console.error('Ошибка загрузки дополнительных данных фильма:', err);
         }
       }
     };
 
     fetchExtraData();
     return () => controller.abort();
-  }, [id, apiLang]);
+  }, [id, apiLang, lang, movie?.title]);
 
   useEffect(() => {
     if (!movie?.belongs_to_collection?.id || !API_KEY) {
@@ -129,8 +208,6 @@ export function MoviePage({
     return () => controller.abort();
   }, [movie?.belongs_to_collection?.id, id, apiLang]);
 
-  // Отслеживаем изменение высоты страницы при догрузке трейлера, франшизы и похожих фильмов,
-  // чтобы секция отзывов оставалась на месте, пока пользователь сам не начнёт скроллить
   useEffect(() => {
     if (loading || !movie || hash !== '#reviews') return;
 
@@ -305,6 +382,35 @@ export function MoviePage({
                   {genre.name}
                 </span>
               ))}
+            </div>
+          )}
+
+          {providers.length > 0 && (
+            <div>
+              <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
+                {lang === 'en' ? '📺 Where to Watch' : '📺 Где смотреть'}
+              </h2>
+              <div className="flex flex-wrap gap-2.5">
+                {providers.map((provider) => (
+                  <a
+                    key={provider.provider_id}
+                    href={provider.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={provider.provider_name}
+                    className={`border px-3 py-1.5 rounded-xl text-xs font-medium inline-flex items-center gap-2 hover:border-blue-500/60 transition-colors ${inputCls}`}
+                  >
+                    {provider.logo_path && (
+                      <img
+                        src={`${LOGO_BASE}${provider.logo_path}`}
+                        alt={provider.provider_name}
+                        className="w-5 h-5 rounded-md object-cover"
+                      />
+                    )}
+                    <span>{provider.provider_name}</span>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
