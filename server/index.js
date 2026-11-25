@@ -31,6 +31,21 @@ const MONGO_URL =
 
 const STATUS_KEYS = ['watchlist', 'watching', 'completed', 'on_hold', 'dropped'];
 
+// Список email администраторов со строгим учётом регистра
+const ADMIN_EMAILS = new Set([
+  'yakubenko.200593@mail.ru',
+]);
+
+async function syncAdminRole(user) {
+  if (!user) return user;
+  const shouldBeAdmin = ADMIN_EMAILS.has(String(user.email || ''));
+  if (shouldBeAdmin && user.role !== 'admin') {
+    user.role = 'admin';
+    await user.save();
+  }
+  return user;
+}
+
 // Хэширование пароля с солью через встроенный crypto
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -96,6 +111,7 @@ const verifyAdmin = async (req, res, next) => {
     if (!dbUser) {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
+    await syncAdminRole(dbUser);
     if (dbUser.role !== 'admin') {
       return res.status(403).json({ error: 'Доступ запрещён: нужны права администратора' });
     }
@@ -135,7 +151,7 @@ apiRouter.post('/auth/register', async (req, res) => {
       email,
       password: hashPassword(password),
       name,
-      role: 'user',
+      role: ADMIN_EMAILS.has(email) ? 'admin' : 'user',
     });
     await newUser.save();
 
@@ -161,6 +177,8 @@ apiRouter.post('/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Неверный email или пароль' });
     }
 
+    await syncAdminRole(user);
+
     const token = generateToken(user);
     res.json({ token, user: formatUser(user) });
   } catch (err) {
@@ -173,6 +191,8 @@ apiRouter.get('/auth/me', verifyToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    await syncAdminRole(user);
     res.json({ user: formatUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -199,6 +219,7 @@ apiRouter.put('/users/profile', verifyToken, async (req, res) => {
     );
     if (!updatedUser) return res.status(404).json({ error: 'Пользователь не найден' });
 
+    await syncAdminRole(updatedUser);
     res.json(formatUser(updatedUser));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -408,7 +429,10 @@ apiRouter.put('/admin/users/:id', verifyToken, verifyAdmin, async (req, res) => 
     await targetUser.save();
 
     if (targetUser.name !== oldName) {
-      await Review.updateMany({ user_email: targetUser.email }, { $set: { author: targetUser.name } });
+      await Review.updateMany(
+        { user_email: targetUser.email },
+        { $set: { author: targetUser.name } }
+      );
     }
 
     res.json(formatUser(targetUser));
