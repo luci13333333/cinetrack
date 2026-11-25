@@ -8,43 +8,55 @@ const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const LIST_TABS = [
   {
     key: 'favorites',
-    ruTitle: '♥ Избранное',
-    enTitle: '♥ Favorites',
+    icon: '♥',
+    ruTitle: 'Избранное',
+    enTitle: 'Favorites',
     emptyTextKey: 'favoritesEmpty',
   },
   {
     key: 'watchlist',
-    ruTitle: '📌 Хочу посмотреть',
-    enTitle: '📌 Plan to Watch',
+    icon: '📌',
+    ruTitle: 'Хочу посмотреть',
+    enTitle: 'Plan to Watch',
     emptyTextKey: 'sectionEmpty',
   },
   {
     key: 'watching',
-    ruTitle: '▶ Смотрю',
-    enTitle: '▶ Watching',
+    icon: '▶',
+    ruTitle: 'Смотрю',
+    enTitle: 'Watching',
     emptyTextKey: 'sectionEmpty',
   },
   {
     key: 'completed',
-    ruTitle: '✅ Просмотрено',
-    enTitle: '✅ Completed',
+    icon: '✅',
+    ruTitle: 'Просмотрено',
+    enTitle: 'Completed',
     emptyTextKey: 'sectionEmpty',
   },
   {
     key: 'on_hold',
-    ruTitle: '⏸ Отложено',
-    enTitle: '⏸ On Hold',
+    icon: '⏸',
+    ruTitle: 'Отложено',
+    enTitle: 'On Hold',
     emptyTextKey: 'sectionEmpty',
   },
   {
     key: 'dropped',
-    ruTitle: '✖ Бросил',
-    enTitle: '✖ Dropped',
+    icon: '✖',
+    ruTitle: 'Бросил',
+    enTitle: 'Dropped',
     emptyTextKey: 'sectionEmpty',
   },
 ];
 
-export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }) {
+export function FavoritesPage({
+  t,
+  lang = 'ru',
+  currentTheme,
+  knownMovies = [],
+  movieReviewsMap = {},
+}) {
   const { state } = useFavorites();
   const [activeTab, setActiveTab] = useState('favorites');
   const [fetchedMap, setFetchedMap] = useState({});
@@ -89,15 +101,22 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
     };
   }, [allIds.join(','), apiLang]);
 
-  const resolveMovie = (id) =>
-    knownMovies.find((m) => m.id === id) ||
-    fetchedMap[id] || {
-      id,
-      title: lang === 'en' ? `Movie #${id}` : `Фильм #${id}`,
-      poster_path: null,
-      vote_average: 0,
-      release_date: '',
+  const resolveMovie = (id) => {
+    const baseMovie =
+      knownMovies.find((m) => m.id === id) ||
+      fetchedMap[id] || {
+        id,
+        title: lang === 'en' ? `Movie #${id}` : `Фильм #${id}`,
+        poster_path: null,
+        vote_average: 0,
+        release_date: '',
+      };
+    const savedReviews = movieReviewsMap[id]?.reviews || [];
+    return {
+      ...baseMovie,
+      reviewsCount: baseMovie.reviewsCount ?? savedReviews.length,
     };
+  };
 
   const cardCls = currentTheme?.card || 'bg-gray-900 border-gray-800 text-white';
   const panelCls = currentTheme?.input || 'bg-gray-950/60 border-gray-800';
@@ -105,8 +124,9 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
 
   const currentTabConfig =
     LIST_TABS.find((tab) => tab.key === activeTab) || LIST_TABS[0];
-  const currentTabTitle =
-    lang === 'en' ? currentTabConfig.enTitle : currentTabConfig.ruTitle;
+  const currentTabTitle = `${currentTabConfig.icon} ${
+    lang === 'en' ? currentTabConfig.enTitle : currentTabConfig.ruTitle
+  }`;
   const currentTabMovies = (state[currentTabConfig.key] || []).map(resolveMovie);
   const currentTabEmptyText =
     t?.[currentTabConfig.emptyTextKey] ||
@@ -133,7 +153,7 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
         </div>
       </div>
 
-      {/* Панель вкладок-переключателей между списками */}
+      {/* Компактные вкладки: только значок и число, название раскрывается при наведении */}
       <div
         role="tablist"
         aria-label={t?.listsTitle || 'Мои списки'}
@@ -150,16 +170,21 @@ export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }
               type="button"
               role="tab"
               aria-selected={isActive}
+              aria-label={`${label}: ${count}`}
+              title={`${label} (${count})`}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all inline-flex items-center gap-2 cursor-pointer ${
+              className={`group h-10 px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all duration-200 inline-flex items-center cursor-pointer overflow-hidden ${
                 isActive
                   ? `${accentBgCls} border-transparent text-white shadow-md`
                   : `${panelCls} opacity-80 hover:opacity-100`
               }`}
             >
-              <span>{label}</span>
+              <span className="text-sm leading-none shrink-0">{tab.icon}</span>
+              <span className="max-w-0 opacity-0 translate-x-[-4px] group-hover:max-w-[190px] group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:max-w-[190px] group-focus-visible:opacity-100 group-focus-visible:translate-x-0 transition-all duration-200 whitespace-nowrap overflow-hidden ml-0 group-hover:ml-2 group-focus-visible:ml-2">
+                {label}
+              </span>
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
                   isActive ? 'bg-black/25' : 'bg-black/30 opacity-85'
                 }`}
               >

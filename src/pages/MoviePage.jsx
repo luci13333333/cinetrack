@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { RatingBadge } from '../components/RatingBadge';
 import { useFavorites } from '../context/FavoritesContext';
 import { useFetch } from '../hooks/useFetch';
@@ -19,6 +19,7 @@ export function MoviePage({
   onDeleteReview,
 }) {
   const { id } = useParams();
+  const { hash } = useLocation();
   const navigate = useNavigate();
   const { state, dispatch } = useFavorites();
   const apiLang = lang === 'en' ? 'en-US' : 'ru-RU';
@@ -50,8 +51,18 @@ export function MoviePage({
     setTrailerKey(null);
     setSimilarMovies([]);
     setCollectionMovies([]);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [id]);
+    if (hash !== '#reviews') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [id, hash]);
+
+  useEffect(() => {
+    if (loading || !movie || hash !== '#reviews') return;
+    const reviewsEl = document.getElementById('reviews');
+    if (reviewsEl) {
+      reviewsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [loading, movie, hash]);
 
   useEffect(() => {
     if (!id || !API_KEY) return;
@@ -366,7 +377,7 @@ export function MoviePage({
         </section>
       )}
 
-      <section className={`border rounded-3xl p-6 space-y-5 ${cardCls}`}>
+      <section id="reviews" className={`border rounded-3xl p-6 space-y-5 scroll-mt-24 ${cardCls}`}>
         <h2 className="text-lg font-bold">
           {t?.reviewsTitle || '💭 Отзывы и оценки'} ({savedReviews.length})
         </h2>

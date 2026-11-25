@@ -37,6 +37,7 @@ const translations = {
     minRatingLabel: 'Мин. рейтинг:',
     inFavorites: '♥ В избранном',
     addToFavorites: '♡ В избранное',
+    reviewsButton: '💬 Отзывы',
     movieFavActive: '❤️ В избранном',
     movieFavInactive: '🤍 В избранное',
     statusLabel: 'Статус просмотра',
@@ -119,6 +120,7 @@ const translations = {
     minRatingLabel: 'Min Rating:',
     inFavorites: '♥ In Favorites',
     addToFavorites: '♡ Add to Favorites',
+    reviewsButton: '💬 Reviews',
     movieFavActive: '❤️ In Favorites',
     movieFavInactive: '🤍 Add to Favorites',
     statusLabel: 'Watch status',
@@ -629,6 +631,7 @@ export default function App() {
                 lang={lang}
                 currentTheme={currentTheme}
                 knownMovies={knownMovies}
+                movieReviewsMap={movieReviewsMap}
               />
             }
           />
