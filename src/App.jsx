@@ -90,11 +90,11 @@ const translations = {
     themeLabel: 'Тема оформления:',
     favoriteGenre: 'Любимый жанр',
     favoriteGenreUnknown: 'Не определен',
-    reviewsInDb: 'Отзывов в БД',
+    reviewsInDb: 'Отзывов',
     avgRating: 'Средняя оценка',
-    reviewsHistoryTitle: '📝 История ваших отзывов из БД',
-    noUserReviews: 'В базе данных нет ваших отзывов.',
-    savedToast: 'Профиль успешно сохранен в БД!',
+    reviewsHistoryTitle: '📝 История ваших отзывов',
+    noUserReviews: 'У вас пока нет отзывов.',
+    savedToast: 'Профиль успешно сохранен!',
     scrollTop: '↑ Наверх',
   },
   en: {
@@ -173,11 +173,11 @@ const translations = {
     themeLabel: 'Theme:',
     favoriteGenre: 'Favorite Genre',
     favoriteGenreUnknown: 'Not determined',
-    reviewsInDb: 'Reviews in DB',
+    reviewsInDb: 'Reviews',
     avgRating: 'Average Rating',
-    reviewsHistoryTitle: '📝 Your Reviews History in DB',
-    noUserReviews: 'You have no reviews in the database.',
-    savedToast: 'Profile successfully saved in DB!',
+    reviewsHistoryTitle: '📝 Your Reviews History',
+    noUserReviews: 'You have no reviews yet.',
+    savedToast: 'Profile successfully saved!',
     scrollTop: '↑ Top',
   },
 };
@@ -450,7 +450,7 @@ export default function App() {
       showToast(
         lang === 'en' ? 'Sign in to leave reviews' : 'Войдите, чтобы оставлять отзывы'
       );
-      return;
+      return false;
     }
 
     try {
@@ -479,19 +479,19 @@ export default function App() {
         showToast(
           lang === 'en' ? 'Session expired, please sign in again' : 'Сессия истекла, войдите заново'
         );
-        return;
+        return false;
       }
 
       if (res.ok) {
         const allReviewsList = await res.json();
         setMovieReviewsMap(buildReviewsMap(allReviewsList));
-        showToast(
-          lang === 'en' ? 'Review saved to DB!' : 'Отзыв успешно сохранен в БД!'
-        );
+        showToast(lang === 'en' ? 'Review saved!' : 'Отзыв сохранен!');
+        return true;
       }
     } catch (err) {
       console.error('Ошибка сохранения отзыва:', err);
     }
+    return false;
   };
 
   const handleDeleteReview = async (reviewId) => {
@@ -505,9 +505,7 @@ export default function App() {
       if (res.ok) {
         const allReviewsList = await res.json();
         setMovieReviewsMap(buildReviewsMap(allReviewsList));
-        showToast(
-          lang === 'en' ? 'Review deleted from DB' : 'Отзыв удален из БД'
-        );
+        showToast(lang === 'en' ? 'Review deleted' : 'Отзыв удален');
       }
     } catch (err) {
       console.error('Ошибка удаления:', err);
@@ -655,6 +653,7 @@ export default function App() {
                 userReviewsCount={userReviewsCount}
                 avgUserRating={avgUserRating}
                 favoriteGenreName={favoriteGenreName}
+                onUpdateReview={handleUpdateMovie}
                 onDeleteReview={handleDeleteReview}
                 onSelectMovieFromReview={(rev) => navigate(`/movie/${rev.movie_id}`)}
               />
