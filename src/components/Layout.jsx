@@ -77,6 +77,11 @@ export function Layout({
                   </span>
                 )}
               </NavLink>
+                {user?.role === 'admin' && (
+                  <NavLink to="/admin" className={navLinkClass}>
+                    {lang === 'en' ? 'Admin' : 'Админка'}
+                    </NavLink>
+                  )}
             </nav>
           </div>
 

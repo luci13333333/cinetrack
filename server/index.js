@@ -40,7 +40,6 @@ function hashPassword(password) {
 
 function verifyPassword(password, storedValue) {
   if (!storedValue || !storedValue.includes(':')) {
-    // Совместимость со старыми записями в БД, сохранёнными без хэша
     return storedValue === password;
   }
   const [salt, originalHash] = storedValue.split(':');
@@ -52,8 +51,10 @@ function verifyPassword(password, storedValue) {
 
 function formatUser(user) {
   return {
+    id: String(user._id),
     name: user.name,
     email: user.email,
+    role: user.role || 'user',
     avatar: user.avatar || '',
     color: user.color || 'bg-blue-600',
   };
@@ -88,8 +89,29 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+// Middleware проверки прав администратора по актуальным данным из БД
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const dbUser = await User.findOne({ email: req.user.email });
+    if (!dbUser) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    if (dbUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Доступ запрещён: нужны права администратора' });
+    }
+    req.adminUser = dbUser;
+    next();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const generateToken = (user) => {
-  return jwt.sign({ email: user.email, name: user.name }, SECRET_KEY, { expiresIn: '7d' });
+  return jwt.sign(
+    { email: user.email, name: user.name, role: user.role || 'user' },
+    SECRET_KEY,
+    { expiresIn: '7d' }
+  );
 };
 
 const apiRouter = express.Router();
@@ -113,6 +135,7 @@ apiRouter.post('/auth/register', async (req, res) => {
       email,
       password: hashPassword(password),
       name,
+      role: 'user',
     });
     await newUser.save();
 
@@ -269,13 +292,11 @@ apiRouter.post('/statuses', verifyToken, async (req, res) => {
     const user = await User.findOne({ email: req.user.email });
     if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
 
-    // Убираем фильм из всех списков статусов, чтобы он был в одной категории просмотра
     STATUS_KEYS.forEach((key) => {
       const arr = Array.isArray(user[key]) ? user[key] : [];
       user[key] = arr.filter((id) => Number(id) !== numericId);
     });
 
-    // Если выбран конкретный статус (не 'none'), добавляем в него
     if (status && STATUS_KEYS.includes(status)) {
       user[status] = [...user[status], numericId];
     }
@@ -336,11 +357,128 @@ apiRouter.delete('/reviews/:id', verifyToken, async (req, res) => {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
 
-    if (review.user_email !== req.user.email) {
+    const currentUser = await User.findOne({ email: req.user.email });
+    const isAdmin = currentUser?.role === 'admin';
+
+    if (review.user_email !== req.user.email && !isAdmin) {
       return res.status(403).json({ error: 'Нет прав на удаление этого отзыва' });
     }
 
     await Review.findByIdAndDelete(req.params.id);
+    const allReviews = await Review.find();
+    res.json(allReviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- АДМИНСКИЕ РОУТЫ ---
+
+apiRouter.get('/admin/users', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, '-password').sort({ _id: -1 });
+    res.json(users.map(formatUser));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.put('/admin/users/:id', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    const oldName = targetUser.name;
+
+    if (typeof req.body?.name === 'string' && req.body.name.trim()) {
+      targetUser.name = req.body.name.trim();
+    }
+    if (typeof req.body?.avatar === 'string') {
+      targetUser.avatar = req.body.avatar.trim();
+    }
+    if (typeof req.body?.color === 'string' && req.body.color.trim()) {
+      targetUser.color = req.body.color.trim();
+    }
+    if (req.body?.role === 'user' || req.body?.role === 'admin') {
+      targetUser.role = req.body.role;
+    }
+
+    await targetUser.save();
+
+    if (targetUser.name !== oldName) {
+      await Review.updateMany({ user_email: targetUser.email }, { $set: { author: targetUser.name } });
+    }
+
+    res.json(formatUser(targetUser));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.delete('/admin/users/:id', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    if (String(req.adminUser._id) === String(req.params.id)) {
+      return res.status(400).json({ error: 'Нельзя удалить собственный аккаунт администратора' });
+    }
+
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    if (deletedUser.email) {
+      await Review.deleteMany({ user_email: deletedUser.email });
+    }
+
+    res.json({ ok: true, deletedId: req.params.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.get('/admin/reviews', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const reviews = await Review.find().sort({ _id: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.put('/admin/reviews/:id', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ error: 'Отзыв не найден' });
+    }
+
+    if (typeof req.body?.text === 'string' && req.body.text.trim()) {
+      review.text = req.body.text.trim();
+    }
+    if (req.body?.rating !== undefined) {
+      const numericRating = Number(req.body.rating);
+      if (Number.isFinite(numericRating)) {
+        review.rating = Math.min(10, Math.max(1, numericRating));
+      }
+    }
+
+    await review.save();
+    const allReviews = await Review.find();
+    res.json(allReviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.delete('/admin/reviews/:id', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const deleted = await Review.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Отзыв не найден' });
+    }
+
     const allReviews = await Review.find();
     res.json(allReviews);
   } catch (err) {

@@ -9,6 +9,7 @@ import { MoviePage } from './pages/MoviePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
+import { AdminPage } from './pages/AdminPage';
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
@@ -656,6 +657,22 @@ export default function App() {
                 onUpdateReview={handleUpdateMovie}
                 onDeleteReview={handleDeleteReview}
                 onSelectMovieFromReview={(rev) => navigate(`/movie/${rev.movie_id}`)}
+              />
+            }
+          />
+          <Route
+            path="admin"
+            element={
+              <AdminPage
+                apiUrl={API_URL}
+                token={token}
+                user={user}
+                lang={lang}
+                currentTheme={currentTheme}
+                onNotify={showToast}
+                onReviewsUpdated={(allReviewsList) =>
+                  setMovieReviewsMap(buildReviewsMap(allReviewsList))
+                }
               />
             }
           />
