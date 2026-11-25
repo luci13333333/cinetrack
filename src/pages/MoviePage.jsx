@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RatingBadge } from '../components/RatingBadge';
+import { useFavorites } from '../context/FavoritesContext';
 import { useFetch } from '../hooks/useFetch';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
@@ -12,14 +13,13 @@ export function MoviePage({
   lang = 'ru',
   currentTheme,
   user,
-  favorites = [],
   movieReviewsMap = {},
-  onToggleFavorite,
   onUpdateMovie,
   onDeleteReview,
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { state, dispatch } = useFavorites();
   const apiLang = lang === 'en' ? 'en-US' : 'ru-RU';
 
   const movieUrl =
@@ -153,12 +153,20 @@ export function MoviePage({
   const ratingValue =
     movieReviewsMap[movie.id]?.rating ??
     (typeof movie.vote_average === 'number' ? Number(movie.vote_average.toFixed(1)) : 0);
-  const isFav = favorites.includes(Number(id));
+  const numericMovieId = Number(id);
+  const isFav = (state.favorites || []).includes(numericMovieId);
 
   const cardCls = currentTheme?.card || 'bg-gray-900 border-gray-800 text-white';
   const inputCls = currentTheme?.input || 'bg-gray-950 border-gray-800 text-white';
   const accentBgCls = currentTheme?.accentBg || 'bg-blue-600 hover:bg-blue-500';
   const accentTextCls = currentTheme?.accentText || 'text-blue-400';
+
+  const handleToggleFavorite = () => {
+    dispatch({
+      type: isFav ? 'REMOVE_FAVORITE' : 'ADD_FAVORITE',
+      payload: numericMovieId,
+    });
+  };
 
   const handleSubmitReview = (e) => {
     e.preventDefault();
@@ -205,17 +213,15 @@ export function MoviePage({
           <div className="flex flex-wrap items-center gap-4 text-sm opacity-85">
             <span>Год: {movie.release_date ? movie.release_date.slice(0, 4) : '—'}</span>
             {movie.runtime > 0 && <span>Длительность: {movie.runtime} мин.</span>}
-            {onToggleFavorite && (
-              <button
-                type="button"
-                onClick={() => onToggleFavorite(Number(id))}
-                className={`px-4 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
-                  isFav ? 'bg-rose-600/20 border-rose-500 text-rose-400' : inputCls
-                }`}
-              >
-                {isFav ? '❤️ В избранном' : '🤍 В избранное'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className={`px-4 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                isFav ? 'bg-rose-600/20 border-rose-500 text-rose-400' : inputCls
+              }`}
+            >
+              {isFav ? '❤️ В избранном' : '🤍 В избранное'}
+            </button>
           </div>
 
           {Array.isArray(movie.genres) && movie.genres.length > 0 && (

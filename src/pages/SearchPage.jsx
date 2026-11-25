@@ -13,9 +13,7 @@ export function SearchPage({
   t,
   lang = 'ru',
   currentTheme,
-  favorites = [],
   movieReviewsMap = {},
-  onToggleFavorite,
   onOpenMovieModal,
 }) {
   const navigate = useNavigate();
@@ -134,8 +132,6 @@ export function SearchPage({
             <MovieCard
               key={movie.id}
               movie={movie}
-              isFavorite={favorites.includes(movie.id)}
-              onToggleFavorite={onToggleFavorite}
               onCardClick={() => {
                 if (onOpenMovieModal) {
                   onOpenMovieModal(movie);

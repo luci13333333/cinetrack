@@ -13,9 +13,7 @@ export function HomePage({
   lang = 'ru',
   genres = [],
   currentTheme,
-  favorites = [],
   movieReviewsMap = {},
-  onToggleFavorite,
   onOpenMovieModal,
   onMoviesLoaded,
 }) {
@@ -59,11 +57,14 @@ export function HomePage({
   });
 
   useEffect(() => {
-    if (movies.length > 0 && onMoviesLoaded) {
+    if (Array.isArray(data?.results) && data.results.length > 0 && onMoviesLoaded) {
       onMoviesLoaded(movies);
     }
+  }, [data, onMoviesLoaded]);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [page, selectedGenre, selectedYear, minRating, lang, data]);
+  }, [page, selectedGenre, selectedYear, minRating, lang]);
 
   if (!API_KEY) {
     return (
@@ -164,8 +165,6 @@ export function HomePage({
               <MovieCard
                 key={movie.id}
                 movie={movie}
-                isFavorite={favorites.includes(movie.id)}
-                onToggleFavorite={onToggleFavorite}
                 onCardClick={() => {
                   if (onOpenMovieModal) {
                     onOpenMovieModal(movie);
