@@ -92,7 +92,7 @@ export function SearchPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Поиск фильмов</h1>
+      <h1 className="text-2xl font-bold mb-6">{t?.searchPageTitle || 'Поиск фильмов'}</h1>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <input
@@ -109,16 +109,28 @@ export function SearchPage({
           onClick={handleShare}
           className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl text-sm font-medium text-white transition-colors shrink-0 cursor-pointer"
         >
-          {copied ? '✓ Ссылка скопирована' : 'Поделиться'}
+          {copied
+            ? t?.copied || '✓ Ссылка скопирована'
+            : t?.share || 'Поделиться'}
         </button>
       </div>
 
       {!debouncedQuery && (
-        <p className="opacity-70 text-sm">Введите название фильма, чтобы начать поиск.</p>
+        <p className="opacity-70 text-sm">
+          {t?.searchHint || 'Введите название фильма, чтобы начать поиск.'}
+        </p>
       )}
 
-      {loading && <div className="opacity-70 py-8">Ищем фильмы...</div>}
-      {error && <div className="text-red-400 py-8">Ошибка поиска: {error}</div>}
+      {loading && (
+        <div className="opacity-70 py-8">
+          {t?.searching || 'Ищем фильмы...'}
+        </div>
+      )}
+      {error && (
+        <div className="text-red-400 py-8">
+          {lang === 'en' ? `Search error: ${error}` : `Ошибка поиска: ${error}`}
+        </div>
+      )}
 
       {debouncedQuery && !loading && !error && movies.length === 0 && (
         <p className="opacity-70 py-8">
@@ -132,6 +144,7 @@ export function SearchPage({
             <MovieCard
               key={movie.id}
               movie={movie}
+              t={t}
               onCardClick={() => {
                 if (onOpenMovieModal) {
                   onOpenMovieModal(movie);

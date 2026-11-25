@@ -86,7 +86,7 @@ export function favoritesReducer(state, action) {
 
 export const FavoritesContext = createContext(null);
 
-export function FavoritesProvider({ children, token, onRequireAuth, onNotify }) {
+export function FavoritesProvider({ children, token, onRequireAuth, onNotify, lang = 'ru' }) {
   const [state, dispatch] = useReducer(favoritesReducer, initialState);
 
   useEffect(() => {
@@ -144,7 +144,13 @@ export function FavoritesProvider({ children, token, onRequireAuth, onNotify }) 
 
   const dispatchWithSync = async (action) => {
     if (!token && action.type !== 'SET_DATA') {
-      if (onNotify) onNotify('Войдите в аккаунт, чтобы сохранять фильмы');
+      if (onNotify) {
+        onNotify(
+          lang === 'en'
+            ? 'Sign in to save movies'
+            : 'Войдите в аккаунт, чтобы сохранять фильмы'
+        );
+      }
       if (onRequireAuth) onRequireAuth();
       return;
     }

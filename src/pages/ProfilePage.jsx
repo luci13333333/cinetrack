@@ -2,15 +2,16 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 const PROFILE_COLORS = [
-  { name: 'Синий', value: 'bg-blue-600' },
-  { name: 'Фиолетовый', value: 'bg-purple-600' },
-  { name: 'Изумрудный', value: 'bg-emerald-600' },
-  { name: 'Огненный', value: 'bg-rose-600' },
-  { name: 'Янтарный', value: 'bg-amber-600' },
+  { name: { ru: 'Синий', en: 'Blue' }, value: 'bg-blue-600' },
+  { name: { ru: 'Фиолетовый', en: 'Purple' }, value: 'bg-purple-600' },
+  { name: { ru: 'Изумрудный', en: 'Emerald' }, value: 'bg-emerald-600' },
+  { name: { ru: 'Огненный', en: 'Rose' }, value: 'bg-rose-600' },
+  { name: { ru: 'Янтарный', en: 'Amber' }, value: 'bg-amber-600' },
 ];
 
 export function ProfilePage({
   t,
+  lang = 'ru',
   user,
   userInitials,
   currentTheme,
@@ -65,11 +66,11 @@ export function ProfilePage({
             <span className={`text-3xl font-black ${currentTheme.accentText}`}>
               {userReviewsCount}
             </span>
-            <p className="text-xs opacity-70 mt-1">Отзывов в БД</p>
+            <p className="text-xs opacity-70 mt-1">{t?.reviewsInDb || 'Отзывов в БД'}</p>
           </div>
           <div className={`p-4 rounded-2xl border text-center ${currentTheme.input}`}>
             <span className="text-3xl font-black text-yellow-400">★ {avgUserRating} / 10</span>
-            <p className="text-xs opacity-70 mt-1">Средняя оценка</p>
+            <p className="text-xs opacity-70 mt-1">{t?.avgRating || 'Средняя оценка'}</p>
           </div>
         </div>
 
@@ -97,18 +98,22 @@ export function ProfilePage({
           <div>
             <label className="block text-sm font-medium mb-2 opacity-80">{t.colorLabel}</label>
             <div className="flex items-center gap-3">
-              {PROFILE_COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setProfileColor(c.value)}
-                  className={`w-10 h-10 rounded-xl ${c.value} transition-transform cursor-pointer ${
-                    profileColor === c.value
-                      ? 'scale-110 ring-4 ring-white/30'
-                      : 'opacity-70 hover:opacity-100'
-                  }`}
-                />
-              ))}
+              {PROFILE_COLORS.map((c) => {
+                const label = typeof c.name === 'object' ? c.name[lang] || c.name.ru : c.name;
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    title={label}
+                    onClick={() => setProfileColor(c.value)}
+                    className={`w-10 h-10 rounded-xl ${c.value} transition-transform cursor-pointer ${
+                      profileColor === c.value
+                        ? 'scale-110 ring-4 ring-white/30'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  />
+                );
+              })}
             </div>
           </div>
           <button
@@ -121,7 +126,9 @@ export function ProfilePage({
       </div>
 
       <div className={`border p-8 rounded-3xl shadow-2xl ${currentTheme.card}`}>
-        <h3 className="text-xl font-bold mb-6">📝 История ваших отзывов из БД</h3>
+        <h3 className="text-xl font-bold mb-6">
+          {t?.reviewsHistoryTitle || '📝 История ваших отзывов из БД'}
+        </h3>
         <div className="space-y-4">
           {allUserReviews.length > 0 ? (
             allUserReviews.map((rev) => (
@@ -138,7 +145,9 @@ export function ProfilePage({
                     />
                   )}
                   <div>
-                    <h4 className="text-sm font-bold">{rev.movie_title || 'Фильм'}</h4>
+                    <h4 className="text-sm font-bold">
+                      {rev.movie_title || (lang === 'en' ? 'Movie' : 'Фильм')}
+                    </h4>
                     <p className="text-xs opacity-90 mt-1">"{rev.text}"</p>
                     <span className="text-[10px] opacity-60 block mt-1">{rev.date}</span>
                   </div>
@@ -149,7 +158,7 @@ export function ProfilePage({
                     type="button"
                     onClick={() => onSelectMovieFromReview(rev)}
                     className="bg-blue-500/10 text-blue-400 p-2 rounded-xl text-xs hover:bg-blue-500/20 transition-colors cursor-pointer"
-                    title="Редактировать отзыв"
+                    title={lang === 'en' ? 'Edit review' : 'Редактировать отзыв'}
                   >
                     ✏️
                   </button>
@@ -157,7 +166,7 @@ export function ProfilePage({
                     type="button"
                     onClick={() => onDeleteReview(rev.id)}
                     className="bg-red-500/10 text-red-400 p-2 rounded-xl text-xs hover:bg-red-500/20 transition-colors cursor-pointer"
-                    title="Удалить отзыв"
+                    title={lang === 'en' ? 'Delete review' : 'Удалить отзыв'}
                   >
                     ✕
                   </button>
@@ -165,7 +174,9 @@ export function ProfilePage({
               </div>
             ))
           ) : (
-            <p className="opacity-60 text-sm text-center py-6">В базе данных нет ваших отзывов.</p>
+            <p className="opacity-60 text-sm text-center py-6">
+              {t?.noUserReviews || 'В базе данных нет ваших отзывов.'}
+            </p>
           )}
         </div>
       </div>

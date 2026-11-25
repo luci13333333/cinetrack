@@ -69,7 +69,9 @@ export function HomePage({
   if (!API_KEY) {
     return (
       <div className="text-center py-12 text-amber-400">
-        Не задан ключ VITE_TMDB_API_KEY в переменных окружения.
+        {lang === 'en'
+          ? 'VITE_TMDB_API_KEY is not set in environment variables.'
+          : 'Не задан ключ VITE_TMDB_API_KEY в переменных окружения.'}
       </div>
     );
   }
@@ -155,8 +157,16 @@ export function HomePage({
         )}
       </section>
 
-      {loading && <div className="text-center py-12 text-gray-400">Загрузка фильмов...</div>}
-      {error && <div className="text-center py-12 text-red-400">Ошибка загрузки: {error}</div>}
+      {loading && (
+        <div className="text-center py-12 text-gray-400">
+          {lang === 'en' ? 'Loading movies...' : 'Загрузка фильмов...'}
+        </div>
+      )}
+      {error && (
+        <div className="text-center py-12 text-red-400">
+          {lang === 'en' ? `Loading error: ${error}` : `Ошибка загрузки: ${error}`}
+        </div>
+      )}
 
       {!loading && !error && movies.length > 0 && (
         <>
@@ -165,6 +175,7 @@ export function HomePage({
               <MovieCard
                 key={movie.id}
                 movie={movie}
+                t={t}
                 onCardClick={() => {
                   if (onOpenMovieModal) {
                     onOpenMovieModal(movie);
@@ -185,7 +196,7 @@ export function HomePage({
                 disabled={page === 1}
                 className={`px-4 py-2.5 rounded-xl border text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
               >
-                ← Назад
+                {lang === 'en' ? '← Prev' : '← Назад'}
               </button>
 
               {Array.from({ length: Math.min(totalPages, 5) }, (_, index) => {
@@ -216,7 +227,7 @@ export function HomePage({
                 disabled={page === totalPages}
                 className={`px-4 py-2.5 rounded-xl border text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
               >
-                Вперед →
+                {lang === 'en' ? 'Next →' : 'Вперед →'}
               </button>
             </div>
           )}

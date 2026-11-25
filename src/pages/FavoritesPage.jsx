@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 import { MovieCard } from '../components/MovieCard';
 import { useFavorites } from '../context/FavoritesContext';
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const STATUS_SECTIONS = [
-  { key: 'watchlist', title: '📌 Хочу посмотреть' },
-  { key: 'watching', title: '▶ Смотрю' },
-  { key: 'completed', title: '✅ Просмотрено' },
-  { key: 'on_hold', title: '⏸ Отложено' },
-  { key: 'dropped', title: '✖ Бросил' },
+  { key: 'watchlist', ruTitle: '📌 Хочу посмотреть', enTitle: '📌 Plan to Watch' },
+  { key: 'watching', ruTitle: '▶ Смотрю', enTitle: '▶ Watching' },
+  { key: 'completed', ruTitle: '✅ Просмотрено', enTitle: '✅ Completed' },
+  { key: 'on_hold', ruTitle: '⏸ Отложено', enTitle: '⏸ On Hold' },
+  { key: 'dropped', ruTitle: '✖ Бросил', enTitle: '✖ Dropped' },
 ];
 
-export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
+export function FavoritesPage({ t, lang = 'ru', currentTheme, knownMovies = [] }) {
   const { state } = useFavorites();
   const [fetchedMap, setFetchedMap] = useState({});
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
     knownMovies.find((m) => m.id === id) ||
     fetchedMap[id] || {
       id,
-      title: `Фильм #${id}`,
+      title: lang === 'en' ? `Movie #${id}` : `Фильм #${id}`,
       poster_path: null,
       vote_average: 0,
       release_date: '',
@@ -79,16 +79,20 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
   const panelCls = currentTheme?.input || 'bg-gray-950/60 border-gray-800';
 
   if (loading && allIds.length === 0) {
-    return <div className="text-center py-12 opacity-70">Загрузка списков...</div>;
+    return (
+      <div className="text-center py-12 opacity-70">
+        {lang === 'en' ? 'Loading lists...' : 'Загрузка списков...'}
+      </div>
+    );
   }
 
   return (
     <div className={`border rounded-3xl p-6 space-y-8 shadow-xl ${cardCls}`}>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-2xl font-bold">Мои списки</h1>
+          <h1 className="text-2xl font-bold">{t?.listsTitle || 'Мои списки'}</h1>
           <p className="text-xs opacity-70 mt-1">
-            Категории фильмов, сохранённые в вашем аккаунте
+            {t?.listsSubtitle || 'Категории фильмов, сохранённые в вашем аккаунте'}
           </p>
         </div>
       </div>
@@ -96,13 +100,14 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
       {allIds.length === 0 ? (
         <div className="text-center py-12 space-y-4">
           <p className="opacity-70 text-sm">
-            Списки пока пусты. Добавьте фильмы на главной странице или в поиске.
+            {t?.listsEmpty ||
+              'Списки пока пусты. Добавьте фильмы на главной странице или в поиске.'}
           </p>
           <Link
             to="/"
             className="inline-block bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-colors"
           >
-            На главную
+            {t?.home || 'На главную'}
           </Link>
         </div>
       ) : (
@@ -110,40 +115,52 @@ export function FavoritesPage({ lang = 'ru', currentTheme, knownMovies = [] }) {
           {/* Плашка 1: Избранное */}
           <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">♥ Избранное ({favoriteMovies.length})</h2>
+              <h2 className="text-lg font-bold">
+                ♥ {t?.favorites || 'Избранное'} ({favoriteMovies.length})
+              </h2>
             </div>
 
             {favoriteMovies.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {favoriteMovies.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
+                  <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} />
                 ))}
               </div>
             ) : (
-              <p className="opacity-60 text-xs py-4">В избранном пока пусто.</p>
+              <p className="opacity-60 text-xs py-4">
+                {t?.favoritesEmpty || 'В избранном пока пусто.'}
+              </p>
             )}
           </section>
 
           {/* Плашка 2: Категории просмотра */}
           <section className={`border rounded-2xl p-5 space-y-6 ${panelCls}`}>
-            <h2 className="text-lg font-bold">📂 Категории просмотра</h2>
+            <h2 className="text-lg font-bold">
+              {t?.statusCategoriesTitle || '📂 Категории просмотра'}
+            </h2>
 
             <div className="space-y-6">
               {STATUS_SECTIONS.map((sec) => {
                 const list = (state[sec.key] || []).map(resolveMovie);
+                const sectionTitle = lang === 'en' ? sec.enTitle : sec.ruTitle;
                 return (
-                  <div key={sec.key} className="space-y-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0">
+                  <div
+                    key={sec.key}
+                    className="space-y-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0"
+                  >
                     <h3 className="text-sm font-semibold">
-                      {sec.title} ({list.length})
+                      {sectionTitle} ({list.length})
                     </h3>
                     {list.length > 0 ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {list.map((movie) => (
-                          <MovieCard key={movie.id} movie={movie} theme={currentTheme} />
+                          <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} />
                         ))}
                       </div>
                     ) : (
-                      <p className="opacity-50 text-xs">Пока пусто</p>
+                      <p className="opacity-50 text-xs">
+                        {t?.sectionEmpty || 'Пока пусто'}
+                      </p>
                     )}
                   </div>
                 );

@@ -4,7 +4,7 @@ import { useFavorites } from '../context/FavoritesContext';
 
 export function Layout({
   t,
-  lang,
+  lang = 'ru',
   setLang,
   themeKey,
   setThemeKey,
@@ -68,10 +68,10 @@ export function Layout({
                 {t?.home || 'Главная'}
               </NavLink>
               <NavLink to="/search" className={navLinkClass}>
-                Поиск
+                {t?.searchNav || 'Поиск'}
               </NavLink>
               <NavLink to="/favorites" className={navLinkClass}>
-                <span>Мои списки</span>
+                <span>{t?.listsNav || 'Мои списки'}</span>
                 {favoritesCount > 0 && (
                   <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs font-bold">
                     ♥ {favoritesCount}
@@ -95,11 +95,15 @@ export function Layout({
                   currentTheme?.input || 'bg-gray-950 border-gray-800 text-white'
                 }`}
               >
-                {Object.entries(themes).map(([key, th]) => (
-                  <option key={key} value={key}>
-                    {th.name}
-                  </option>
-                ))}
+                {Object.entries(themes).map(([key, th]) => {
+                  const themeLabel =
+                    typeof th.name === 'object' ? th.name[lang] || th.name.ru : th.name;
+                  return (
+                    <option key={key} value={key}>
+                      {themeLabel}
+                    </option>
+                  );
+                })}
               </select>
             )}
 
@@ -120,7 +124,7 @@ export function Layout({
                 <button
                   type="button"
                   onClick={() => navigate('/profile')}
-                  title="Открыть профиль"
+                  title={t?.profile || 'Профиль'}
                   className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   {user.avatar ? (
@@ -173,12 +177,12 @@ export function Layout({
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="Наверх"
+          aria-label={t?.scrollTop || 'Наверх'}
           className={`fixed bottom-6 right-6 z-40 ${
             currentTheme?.accentBg || 'bg-blue-600 hover:bg-blue-500'
           } text-white px-4 py-3 rounded-2xl shadow-lg text-sm font-semibold transition-colors cursor-pointer`}
         >
-          ↑ Наверх
+          {t?.scrollTop || '↑ Наверх'}
         </button>
       )}
     </div>

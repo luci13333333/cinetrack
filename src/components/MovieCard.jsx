@@ -7,7 +7,7 @@ const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 const FALLBACK_POSTER =
   'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
 
-export function MovieCard({ movie, theme }) {
+export function MovieCard({ movie, theme, t }) {
   const { state, dispatch } = useFavorites();
 
   const currentTheme = theme || {
@@ -33,7 +33,10 @@ export function MovieCard({ movie, theme }) {
       : '—';
 
   const year =
-    movie.year || (movie.release_date ? movie.release_date.slice(0, 4) : 'Год неизвестен');
+    movie.year ||
+    (movie.release_date
+      ? movie.release_date.slice(0, 4)
+      : t?.unknownYear || 'Год неизвестен');
 
   const handleToggleFavorite = (e) => {
     e.preventDefault();
@@ -92,26 +95,28 @@ export function MovieCard({ movie, theme }) {
                 : `${currentTheme.input} opacity-85 hover:opacity-100`
             }`}
           >
-            {isFavorite ? '♥ В избранном' : '♡ В избранное'}
+            {isFavorite
+              ? t?.inFavorites || '♥ В избранном'
+              : t?.addToFavorites || '♡ В избранное'}
           </button>
 
           <select
             value={currentStatus}
             onChange={handleStatusChange}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Статус просмотра"
+            aria-label={t?.statusLabel || 'Статус просмотра'}
             className={`w-full px-3 py-2 rounded-xl border text-xs font-medium outline-none transition-colors cursor-pointer ${
               currentStatus !== 'none'
                 ? 'bg-blue-600/20 border-blue-500 text-blue-300'
                 : `${currentTheme.input} opacity-90 hover:opacity-100`
             }`}
           >
-            <option value="none">+ Статус просмотра</option>
-            <option value="watchlist">📌 Хочу посмотреть</option>
-            <option value="watching">▶ Смотрю</option>
-            <option value="completed">✅ Просмотрено</option>
-            <option value="on_hold">⏸ Отложено</option>
-            <option value="dropped">✖ Бросил</option>
+            <option value="none">{t?.statusNone || '+ Статус просмотра'}</option>
+            <option value="watchlist">{t?.statusWatchlist || '📌 Хочу посмотреть'}</option>
+            <option value="watching">{t?.statusWatching || '▶ Смотрю'}</option>
+            <option value="completed">{t?.statusCompleted || '✅ Просмотрено'}</option>
+            <option value="on_hold">{t?.statusOnHold || '⏸ Отложено'}</option>
+            <option value="dropped">{t?.statusDropped || '✖ Бросил'}</option>
           </select>
         </div>
       </div>
