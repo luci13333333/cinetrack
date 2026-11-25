@@ -1,14 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites, WATCH_STATUSES } from '../context/FavoritesContext';
 import { RatingBadge } from './RatingBadge';
 
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+const LOGO_BASE = 'https://image.tmdb.org/t/p/w92';
 const FALLBACK_POSTER =
   'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
 
-export function MovieCard({ movie, theme, t }) {
+// Кэш провайдеров в рамках сессии, чтобы не запрашивать один и тот же фильм повторно
+const providersCache = new Map();
+
+function extractProviders(regionData) {
+  if (!regionData) return { link: null, list: [] };
+
+  const merged = [
+    ...(regionData.flatrate || []),
+    ...(regionData.free || []),
+    ...(regionData.ads || []),
+    ...(regionData.rent || []),
+    ...(regionData.buy || []),
+  ];
+
+  const uniqueMap = new Map();
+  merged.forEach((p) => {
+    if (p?.provider_id && !uniqueMap.has(p.provider_id)) {
+      uniqueMap.set(p.provider_id, p);
+    }
+  });
+
+  return {
+    link: regionData.link || null,
+    list: Array.from(uniqueMap.values()).slice(0, 5),
+  };
+}
+
+export function MovieCard({ movie, theme, t, lang = 'ru' }) {
   const { state, dispatch } = useFavorites();
+
+  const [shouldLoadProviders, setShouldLoadProviders] = useState(false);
+  const [providersData, setProvidersData] = useState(() => {
+    const cacheKey = `${movie.id}_${lang}`;
+    return providersCache.get(cacheKey) || { link: null, list: [] };
+  });
 
   const currentTheme = theme || {
     card: 'bg-gray-900 border-gray-800 text-white',
@@ -46,6 +81,38 @@ export function MovieCard({ movie, theme, t }) {
     ? t?.inFavorites || '♥ В избранном'
     : t?.addToFavorites || '♡ В избранное';
 
+  useEffect(() => {
+    if (!shouldLoadProviders || !API_KEY || !movieId) return;
+
+    const region = lang === 'en' ? 'US' : 'RU';
+    const cacheKey = `${movieId}_${lang}`;
+
+    if (providersCache.has(cacheKey)) {
+      setProvidersData(providersCache.get(cacheKey));
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${API_KEY}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (cancelled) return;
+        const results = json?.results || {};
+        const selectedRegion = results[region] || results.US || results.RU || null;
+        const parsed = extractProviders(selectedRegion);
+        providersCache.set(cacheKey, parsed);
+        setProvidersData(parsed);
+      })
+      .catch(() => {
+        // Игнорируем сетевые ошибки при подгрузке значков площадок
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldLoadProviders, movieId, lang]);
+
   const handleToggleFavorite = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -65,6 +132,8 @@ export function MovieCard({ movie, theme, t }) {
 
   return (
     <div
+      onMouseEnter={() => setShouldLoadProviders(true)}
+      onFocus={() => setShouldLoadProviders(true)}
       className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors ${currentTheme.card}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden bg-gray-950">
@@ -106,6 +175,38 @@ export function MovieCard({ movie, theme, t }) {
           </Link>
           <p className="text-xs opacity-70 mt-1">{year}</p>
         </div>
+
+        {providersData.list.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {providersData.list.map((provider) => {
+              const targetUrl =
+                providersData.link ||
+                `https://www.themoviedb.org/movie/${movieId}/watch`;
+
+              return (
+                <a
+                  key={provider.provider_id}
+                  href={targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  title={provider.provider_name}
+                  aria-label={provider.provider_name}
+                  className="w-6 h-6 rounded-lg overflow-hidden border border-white/15 bg-black/40 hover:scale-110 hover:border-blue-400 transition-transform shrink-0"
+                >
+                  {provider.logo_path && (
+                    <img
+                      src={`${LOGO_BASE}${provider.logo_path}`}
+                      alt={provider.provider_name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                </a>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <Link
