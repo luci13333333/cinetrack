@@ -8,7 +8,7 @@ const PROFILE_COLORS = [
   'bg-amber-600',
 ];
 
-export {AdminPage}; ({
+export function AdminPage ({
   apiUrl,
   token,
   user,
@@ -16,7 +16,7 @@ export {AdminPage}; ({
   currentTheme,
   onNotify,
   onReviewsUpdated,
-})=> {
+}) {
   const [section, setSection] = useState('users'); // 'users' | 'reviews'
   const [users, setUsers] = useState([]);
   const [reviews, setReviews] = useState([]);
