@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { RatingBadge } from '../components/RatingBadge';
 import { useFavorites } from '../context/FavoritesContext';
@@ -23,6 +23,8 @@ export function MoviePage({
   const navigate = useNavigate();
   const { state, dispatch } = useFavorites();
   const apiLang = lang === 'en' ? 'en-US' : 'ru-RU';
+
+  const pageContainerRef = useRef(null);
 
   const movieUrl =
     API_KEY && id
@@ -57,23 +59,22 @@ export function MoviePage({
   }, [id, hash]);
 
   useEffect(() => {
-    if (loading || !movie || hash !== '#reviews') return;
-    const reviewsEl = document.getElementById('reviews');
-    if (reviewsEl) {
-      reviewsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [loading, movie, hash]);
-
-  useEffect(() => {
     if (!id || !API_KEY) return;
     const controller = new AbortController();
 
     const fetchExtraData = async () => {
       try {
-        const videoRes = await fetch(
-          `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${API_KEY}&language=${apiLang}`,
-          { signal: controller.signal }
-        );
+        const [videoRes, simRes] = await Promise.all([
+          fetch(
+            `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${API_KEY}&language=${apiLang}`,
+            { signal: controller.signal }
+          ),
+          fetch(
+            `https://api.themoviedb.org/3/movie/${id}/similar?api_key=${API_KEY}&language=${apiLang}`,
+            { signal: controller.signal }
+          ),
+        ]);
+
         const videoData = await videoRes.json();
         let officialTrailer = (videoData.results || []).find(
           (v) => v.type === 'Trailer' && v.site === 'YouTube'
@@ -91,10 +92,6 @@ export function MoviePage({
         }
         setTrailerKey(officialTrailer ? officialTrailer.key : null);
 
-        const simRes = await fetch(
-          `https://api.themoviedb.org/3/movie/${id}/similar?api_key=${API_KEY}&language=${apiLang}`,
-          { signal: controller.signal }
-        );
         const simData = await simRes.json();
         setSimilarMovies((simData.results || []).slice(0, 4));
       } catch (err) {
@@ -131,6 +128,53 @@ export function MoviePage({
 
     return () => controller.abort();
   }, [movie?.belongs_to_collection?.id, id, apiLang]);
+
+  // Отслеживаем изменение высоты страницы при догрузке трейлера, франшизы и похожих фильмов,
+  // чтобы секция отзывов оставалась на месте, пока пользователь сам не начнёт скроллить
+  useEffect(() => {
+    if (loading || !movie || hash !== '#reviews') return;
+
+    let userInteracted = false;
+    const stopTracking = () => {
+      userInteracted = true;
+    };
+
+    const alignToReviews = (smooth = false) => {
+      if (userInteracted) return;
+      const reviewsEl = document.getElementById('reviews');
+      if (!reviewsEl) return;
+      const headerOffset = 88;
+      const top = reviewsEl.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    };
+
+    alignToReviews(true);
+
+    window.addEventListener('wheel', stopTracking, { passive: true });
+    window.addEventListener('touchmove', stopTracking, { passive: true });
+
+    const observer = new ResizeObserver(() => {
+      alignToReviews(false);
+    });
+
+    if (pageContainerRef.current) {
+      observer.observe(pageContainerRef.current);
+    }
+
+    const releaseTimer = setTimeout(() => {
+      observer.disconnect();
+    }, 2000);
+
+    return () => {
+      clearTimeout(releaseTimer);
+      observer.disconnect();
+      window.removeEventListener('wheel', stopTracking);
+      window.removeEventListener('touchmove', stopTracking);
+    };
+  }, [loading, movie, hash]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -209,7 +253,7 @@ export function MoviePage({
   };
 
   return (
-    <div className="space-y-8">
+    <div ref={pageContainerRef} className="space-y-8">
       <button
         type="button"
         onClick={handleBack}

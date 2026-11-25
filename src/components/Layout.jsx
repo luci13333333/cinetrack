@@ -19,7 +19,6 @@ export function Layout({
   const navigate = useNavigate();
   const { state } = useFavorites();
   const favoritesCount = state.favorites.length;
-  const watchlistCount = state.watchlist.length;
 
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -75,11 +74,6 @@ export function Layout({
                 {favoritesCount > 0 && (
                   <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs font-bold">
                     ♥ {favoritesCount}
-                  </span>
-                )}
-                {watchlistCount > 0 && (
-                  <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs font-bold">
-                    📌 {watchlistCount}
                   </span>
                 )}
               </NavLink>

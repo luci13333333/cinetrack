@@ -104,15 +104,17 @@ export function SearchPage({
           className={`flex-1 border focus:border-blue-500 rounded-xl px-4 py-3 text-sm outline-none transition-colors ${inputCls}`}
         />
 
-        <button
-          type="button"
-          onClick={handleShare}
-          className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl text-sm font-medium text-white transition-colors shrink-0 cursor-pointer"
-        >
-          {copied
-            ? t?.copied || '✓ Ссылка скопирована'
-            : t?.share || 'Поделиться'}
-        </button>
+        {debouncedQuery && (
+          <button
+            type="button"
+            onClick={handleShare}
+            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl text-sm font-medium text-white transition-colors shrink-0 cursor-pointer"
+          >
+            {copied
+              ? t?.copied || '✓ Ссылка скопирована'
+              : t?.share || 'Поделиться'}
+          </button>
+        )}
       </div>
 
       {!debouncedQuery && (
