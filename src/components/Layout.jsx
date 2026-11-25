@@ -84,11 +84,6 @@ export function Layout({
                   </span>
                 )}
               </NavLink>
-              {user && (
-                <NavLink to="/profile" className={navLinkClass}>
-                  {t?.profile || 'Профиль'}
-                </NavLink>
-              )}
               {user?.role === 'admin' && (
                 <NavLink to="/admin" className={navLinkClass}>
                   {lang === 'en' ? 'Admin' : 'Админка'}
@@ -203,12 +198,6 @@ export function Layout({
                   {favoritesCount > 0 ? `♥ ${favoritesCount}` : '→'}
                 </span>
               </NavLink>
-              {user && (
-                <NavLink to="/profile" className={mobileNavLinkClass}>
-                  <span>{t?.profile || 'Профиль'}</span>
-                  <span>→</span>
-                </NavLink>
-              )}
               {user?.role === 'admin' && (
                 <NavLink to="/admin" className={mobileNavLinkClass}>
                   <span>{lang === 'en' ? 'Admin Panel' : 'Админка'}</span>
