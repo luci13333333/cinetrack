@@ -49,16 +49,16 @@ export function AuthModal({ isOpen, onClose, onLogin, lang = 'ru' }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-gray-900 border border-gray-800 text-white w-full max-w-md rounded-3xl p-6 relative shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-gray-900 border border-gray-800 text-white w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative shadow-2xl my-auto">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white cursor-pointer"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-gray-400 hover:text-white cursor-pointer w-8 h-8 flex items-center justify-center"
         >
           ✕
         </button>
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 pr-8">
           {isRegister
             ? isEn
               ? 'Sign Up'
@@ -69,45 +69,45 @@ export function AuthModal({ isOpen, onClose, onLogin, lang = 'ru' }) {
         </h2>
 
         {error && (
-          <div className="bg-red-900/40 border border-red-500/50 text-red-300 p-3 rounded-xl text-sm mb-4">
+          <div className="bg-red-900/40 border border-red-500/50 text-red-300 p-3 rounded-xl text-xs sm:text-sm mb-4 break-words">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           {isRegister && (
             <div>
-              <label className="text-xs text-gray-400">
+              <label className="text-xs text-gray-400 block mb-1">
                 {isEn ? 'Name' : 'Имя'}
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm outline-none"
+                className="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 sm:p-3 text-sm outline-none"
                 required
               />
             </div>
           )}
           <div>
-            <label className="text-xs text-gray-400">Email</label>
+            <label className="text-xs text-gray-400 block mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm outline-none"
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 sm:p-3 text-sm outline-none"
               required
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400">
+            <label className="text-xs text-gray-400 block mb-1">
               {isEn ? 'Password' : 'Пароль'}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm outline-none"
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 sm:p-3 text-sm outline-none"
               required
             />
           </div>

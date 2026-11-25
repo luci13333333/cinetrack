@@ -330,7 +330,7 @@ export function MoviePage({
   };
 
   return (
-    <div ref={pageContainerRef} className="space-y-8">
+    <div ref={pageContainerRef} className="space-y-6 sm:space-y-8 min-w-0">
       <button
         type="button"
         onClick={handleBack}
@@ -339,21 +339,29 @@ export function MoviePage({
         {t?.back || '← Назад'}
       </button>
 
-      <div className={`border rounded-3xl p-6 grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 ${cardCls}`}>
-        <div className="rounded-2xl overflow-hidden border border-white/10 self-start">
+      <div
+        className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr] gap-5 sm:gap-8 ${cardCls}`}
+      >
+        <div className="rounded-2xl overflow-hidden border border-white/10 self-start max-w-[260px] sm:max-w-[300px] mx-auto md:mx-0 w-full">
           <img src={posterUrl} alt={movie.title} className="w-full h-auto object-cover" />
         </div>
 
-        <div className="space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">{movie.title}</h1>
-              {movie.tagline && <p className="opacity-70 italic text-sm mt-1">«{movie.tagline}»</p>}
+        <div className="space-y-4 sm:space-y-5 min-w-0">
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold break-words">{movie.title}</h1>
+              {movie.tagline && (
+                <p className="opacity-70 italic text-xs sm:text-sm mt-1 break-words">
+                  «{movie.tagline}»
+                </p>
+              )}
             </div>
-            <RatingBadge rating={ratingValue} />
+            <div className="shrink-0">
+              <RatingBadge rating={ratingValue} />
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm opacity-85">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs sm:text-sm opacity-85">
             <span>
               {t?.yearLabel || 'Год'}: {movie.release_date ? movie.release_date.slice(0, 4) : '—'}
             </span>
@@ -365,7 +373,7 @@ export function MoviePage({
             <button
               type="button"
               onClick={handleToggleFavorite}
-              className={`px-4 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                 isFav ? 'bg-rose-600/20 border-rose-500 text-rose-400' : inputCls
               }`}
             >
@@ -387,10 +395,10 @@ export function MoviePage({
 
           {providers.length > 0 && (
             <div>
-              <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
+              <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
                 {lang === 'en' ? '📺 Where to Watch' : '📺 Где смотреть'}
               </h2>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {providers.map((provider) => (
                   <a
                     key={provider.provider_id}
@@ -404,7 +412,7 @@ export function MoviePage({
                       <img
                         src={`${LOGO_BASE}${provider.logo_path}`}
                         alt={provider.provider_name}
-                        className="w-5 h-5 rounded-md object-cover"
+                        className="w-5 h-5 rounded-md object-cover shrink-0"
                       />
                     )}
                     <span>{provider.provider_name}</span>
@@ -415,24 +423,24 @@ export function MoviePage({
           )}
 
           <div>
-            <h2 className={`text-sm font-bold uppercase tracking-wider mb-2 ${accentTextCls}`}>
+            <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 ${accentTextCls}`}>
               {t?.overviewTitle || 'Описание'}
             </h2>
-            <p className="opacity-90 leading-relaxed text-sm">
+            <p className="opacity-90 leading-relaxed text-xs sm:text-sm break-words">
               {movie.overview || t?.noOverview || 'Описание отсутствует.'}
             </p>
           </div>
 
           {castList.length > 0 && (
             <div>
-              <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
+              <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
                 {t?.castTitle || 'В главных ролях'}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {castList.map((actor) => (
                   <span
                     key={`${actor.id}-${actor.credit_id || actor.name}`}
-                    className={`border px-3 py-1.5 rounded-xl text-xs ${inputCls}`}
+                    className={`border px-3 py-1.5 rounded-xl text-xs break-words ${inputCls}`}
                   >
                     {actor.name}
                     {actor.character ? ` — ${actor.character}` : ''}
@@ -445,11 +453,11 @@ export function MoviePage({
       </div>
 
       {trailerKey && (
-        <section className={`border rounded-3xl p-6 ${cardCls}`}>
-          <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
+        <section className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 ${cardCls}`}>
+          <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-3 sm:mb-4 ${accentTextCls}`}>
             {t?.trailerTitle || '🎬 Официальный трейлер'}
           </h2>
-          <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-black">
+          <div className="relative w-full aspect-video rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-black">
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
               title={t?.trailerTitle || 'Официальный трейлер'}
@@ -462,16 +470,16 @@ export function MoviePage({
       )}
 
       {collectionMovies.length > 0 && (
-        <section className={`border rounded-3xl p-6 ${cardCls}`}>
-          <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
+        <section className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 ${cardCls}`}>
+          <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-3 sm:mb-4 ${accentTextCls}`}>
             {t?.collectionTitle || '🍿 Другие части франшизы'}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {collectionMovies.map((item) => (
               <Link
                 key={item.id}
                 to={`/movie/${item.id}`}
-                className={`group border rounded-2xl p-3 transition-all hover:border-blue-500/60 ${inputCls}`}
+                className={`group border rounded-2xl p-2.5 sm:p-3 transition-all hover:border-blue-500/60 ${inputCls}`}
               >
                 <img
                   src={
@@ -480,7 +488,7 @@ export function MoviePage({
                       : posterUrl
                   }
                   alt={item.title}
-                  className="w-full aspect-[2/3] object-cover rounded-xl mb-2.5 group-hover:scale-105 transition-transform"
+                  className="w-full aspect-[2/3] object-cover rounded-xl mb-2 group-hover:scale-105 transition-transform"
                 />
                 <p className={`text-xs font-semibold line-clamp-1 ${accentTextCls}`}>
                   {item.title}
@@ -495,16 +503,16 @@ export function MoviePage({
       )}
 
       {similarMovies.length > 0 && (
-        <section className={`border rounded-3xl p-6 ${cardCls}`}>
-          <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
+        <section className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 ${cardCls}`}>
+          <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-3 sm:mb-4 ${accentTextCls}`}>
             {t?.similarTitle || '🔥 Похожие фильмы'}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {similarMovies.map((item) => (
               <Link
                 key={item.id}
                 to={`/movie/${item.id}`}
-                className={`group border rounded-2xl p-3 transition-all hover:border-blue-500/60 ${inputCls}`}
+                className={`group border rounded-2xl p-2.5 sm:p-3 transition-all hover:border-blue-500/60 ${inputCls}`}
               >
                 <img
                   src={
@@ -513,7 +521,7 @@ export function MoviePage({
                       : posterUrl
                   }
                   alt={item.title}
-                  className="w-full aspect-[2/3] object-cover rounded-xl mb-2.5 group-hover:scale-105 transition-transform"
+                  className="w-full aspect-[2/3] object-cover rounded-xl mb-2 group-hover:scale-105 transition-transform"
                 />
                 <p className={`text-xs font-semibold line-clamp-1 ${accentTextCls}`}>
                   {item.title}
@@ -527,13 +535,16 @@ export function MoviePage({
         </section>
       )}
 
-      <section id="reviews" className={`border rounded-3xl p-6 space-y-5 scroll-mt-24 ${cardCls}`}>
-        <h2 className="text-lg font-bold">
+      <section
+        id="reviews"
+        className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 scroll-mt-24 ${cardCls}`}
+      >
+        <h2 className="text-base sm:text-lg font-bold">
           {t?.reviewsTitle || '💭 Отзывы и оценки'} ({savedReviews.length})
         </h2>
 
         {user ? (
-          <form onSubmit={handleSubmitReview} className={`border p-4 rounded-2xl space-y-4 ${inputCls}`}>
+          <form onSubmit={handleSubmitReview} className={`border p-3.5 sm:p-4 rounded-2xl space-y-3 sm:space-y-4 ${inputCls}`}>
             {editingReviewId && (
               <div
                 className={`flex items-center justify-between text-xs font-semibold px-3 py-1.5 rounded-xl ${accentTextCls} bg-black/20`}
@@ -561,7 +572,7 @@ export function MoviePage({
               required
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs opacity-80">
                   {t?.ratingScaleLabel || 'Оценка (1-10):'}
@@ -581,7 +592,7 @@ export function MoviePage({
 
               <button
                 type="submit"
-                className={`${accentBgCls} text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition-colors cursor-pointer`}
+                className={`w-full sm:w-auto ${accentBgCls} text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition-colors cursor-pointer`}
               >
                 {editingReviewId
                   ? t?.saveChanges || 'Сохранить изменения'
@@ -603,21 +614,23 @@ export function MoviePage({
               return (
                 <div
                   key={rev.id || rev.date}
-                  className={`border p-4 rounded-2xl flex items-start justify-between gap-4 ${inputCls}`}
+                  className={`border p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 ${inputCls}`}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold ${accentTextCls}`}>{rev.author}</span>
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-sm font-bold break-words ${accentTextCls}`}>
+                        {rev.author}
+                      </span>
                       {isOwner && (
                         <span className="text-[10px] bg-black/30 px-2 py-0.5 rounded-md font-medium">
                           {t?.youBadge || 'Вы'}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs opacity-90 leading-relaxed">{rev.text}</p>
+                    <p className="text-xs opacity-90 leading-relaxed break-words">{rev.text}</p>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                     <div className="flex items-center gap-2">
                       <span className="text-yellow-400 font-bold text-xs">
                         ★ {rev.rating} {t?.outOfTen || '/ 10'}
@@ -626,7 +639,7 @@ export function MoviePage({
                     </div>
 
                     {isOwner && (
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-1.5 sm:mt-1">
                         <button
                           type="button"
                           onClick={() => handleStartEdit(rev)}

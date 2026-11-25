@@ -143,17 +143,16 @@ export function FavoritesPage({
   }
 
   return (
-    <div className={`border rounded-3xl p-6 space-y-6 shadow-xl ${cardCls}`}>
+    <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-xl min-w-0 ${cardCls}`}>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-2xl font-bold">{t?.listsTitle || 'Мои списки'}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">{t?.listsTitle || 'Мои списки'}</h1>
           <p className="text-xs opacity-70 mt-1">
             {t?.listsSubtitle || 'Категории фильмов, сохранённые в вашем аккаунте'}
           </p>
         </div>
       </div>
 
-      {/* Компактные вкладки: только значок и число, название раскрывается при наведении */}
       <div
         role="tablist"
         aria-label={t?.listsTitle || 'Мои списки'}
@@ -180,7 +179,7 @@ export function FavoritesPage({
               }`}
             >
               <span className="text-sm leading-none shrink-0">{tab.icon}</span>
-              <span className="max-w-0 opacity-0 translate-x-[-4px] group-hover:max-w-[190px] group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:max-w-[190px] group-focus-visible:opacity-100 group-focus-visible:translate-x-0 transition-all duration-200 whitespace-nowrap overflow-hidden ml-0 group-hover:ml-2 group-focus-visible:ml-2">
+              <span className="ml-2 max-w-[190px] opacity-100 sm:max-w-0 sm:opacity-0 sm:ml-0 sm:translate-x-[-4px] sm:group-hover:max-w-[190px] sm:group-hover:opacity-100 sm:group-hover:translate-x-0 sm:group-hover:ml-2 sm:group-focus-visible:max-w-[190px] sm:group-focus-visible:opacity-100 sm:group-focus-visible:translate-x-0 sm:group-focus-visible:ml-2 transition-all duration-200 whitespace-nowrap overflow-hidden">
                 {label}
               </span>
               <span
@@ -209,15 +208,15 @@ export function FavoritesPage({
           </Link>
         </div>
       ) : (
-        <section className={`border rounded-2xl p-5 space-y-4 ${panelCls}`}>
+        <section className={`border rounded-2xl p-3.5 sm:p-5 space-y-4 ${panelCls}`}>
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-bold">
+            <h2 className="text-base sm:text-lg font-bold">
               {currentTabTitle} ({currentTabMovies.length})
             </h2>
           </div>
 
           {currentTabMovies.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
               {currentTabMovies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} theme={currentTheme} t={t} lang={lang} />
               ))}

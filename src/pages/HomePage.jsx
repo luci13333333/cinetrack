@@ -90,18 +90,22 @@ export function HomePage({
   const accentTextCls = currentTheme?.accentText || 'text-blue-400';
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">{t?.catalog || 'Популярные фильмы'}</h1>
+    <div className="min-w-0">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
+        {t?.catalog || 'Популярные фильмы'}
+      </h1>
 
-      <section className={`border p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between mb-8 ${cardCls}`}>
-        <div className="flex flex-wrap gap-3 items-center flex-grow">
+      <section
+        className={`border p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 sm:items-center justify-between mb-6 sm:mb-8 ${cardCls}`}
+      >
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3 sm:items-center flex-grow min-w-0">
           <select
             value={selectedGenre}
             onChange={(e) => {
               setSelectedGenre(e.target.value);
               setPage(1);
             }}
-            className={`border px-3 py-2 rounded-xl text-sm outline-none cursor-pointer ${inputCls}`}
+            className={`w-full sm:w-auto border px-3 py-2.5 sm:py-2 rounded-xl text-sm outline-none cursor-pointer ${inputCls}`}
           >
             <option value="">{t?.allGenres || 'Все жанры'}</option>
             {genres.map((g) => (
@@ -117,7 +121,7 @@ export function HomePage({
               setSelectedYear(e.target.value);
               setPage(1);
             }}
-            className={`border px-3 py-2 rounded-xl text-sm outline-none cursor-pointer ${inputCls}`}
+            className={`w-full sm:w-auto border px-3 py-2.5 sm:py-2 rounded-xl text-sm outline-none cursor-pointer ${inputCls}`}
           >
             <option value="">{t?.allYears || 'Все года'}</option>
             {['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'].map((y) => (
@@ -127,9 +131,12 @@ export function HomePage({
             ))}
           </select>
 
-          <div className={`flex items-center gap-2 border px-3 py-1.5 rounded-xl ${inputCls}`}>
-            <span className="text-xs opacity-80">
-              {t?.minRatingLabel || 'Мин. рейтинг:'} <strong className="text-yellow-400">{minRating}</strong>
+          <div
+            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 border px-3 py-2 sm:py-1.5 rounded-xl ${inputCls}`}
+          >
+            <span className="text-xs opacity-80 whitespace-nowrap">
+              {t?.minRatingLabel || 'Мин. рейтинг:'}{' '}
+              <strong className="text-yellow-400">{minRating}</strong>
             </span>
             <input
               type="range"
@@ -141,7 +148,7 @@ export function HomePage({
                 setMinRating(Number(e.target.value));
                 setPage(1);
               }}
-              className="accent-blue-500 cursor-pointer w-20"
+              className="accent-blue-500 cursor-pointer w-28 sm:w-20"
             />
           </div>
         </div>
@@ -150,7 +157,7 @@ export function HomePage({
           <button
             type="button"
             onClick={resetFilters}
-            className="bg-black/20 hover:bg-black/40 text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer"
+            className="w-full sm:w-auto bg-black/20 hover:bg-black/40 text-xs px-3 py-2.5 sm:py-2 rounded-xl transition-colors cursor-pointer shrink-0"
           >
             {t?.reset || 'Сбросить'}
           </button>
@@ -170,7 +177,7 @@ export function HomePage({
 
       {!loading && !error && movies.length > 0 && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
             {movies.map((movie) => (
               <MovieCard
                 key={movie.id}
@@ -190,12 +197,12 @@ export function HomePage({
           </div>
 
           {totalPages > 1 && (
-            <div className="flex flex-wrap justify-center items-center gap-2 mt-12">
+            <div className="flex flex-wrap justify-center items-center gap-1.5 sm:gap-2 mt-8 sm:mt-12">
               <button
                 type="button"
                 onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 disabled={page === 1}
-                className={`px-4 py-2.5 rounded-xl border text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
+                className={`px-3 sm:px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
               >
                 {lang === 'en' ? '← Prev' : '← Назад'}
               </button>
@@ -211,7 +218,7 @@ export function HomePage({
                     key={pageNum}
                     type="button"
                     onClick={() => setPage(pageNum)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer ${
+                    className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-colors cursor-pointer ${
                       page === pageNum
                         ? `${accentBgCls} border-transparent text-white shadow-lg`
                         : cardCls
@@ -226,7 +233,7 @@ export function HomePage({
                 type="button"
                 onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={page === totalPages}
-                className={`px-4 py-2.5 rounded-xl border text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
+                className={`px-3 sm:px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold disabled:opacity-40 cursor-pointer ${cardCls}`}
               >
                 {lang === 'en' ? 'Next →' : 'Вперед →'}
               </button>
@@ -236,7 +243,7 @@ export function HomePage({
       )}
 
       {!loading && !error && movies.length === 0 && (
-        <div className={`text-center py-16 border rounded-2xl ${cardCls}`}>
+        <div className={`text-center py-14 sm:py-16 px-4 border rounded-2xl ${cardCls}`}>
           <p className="opacity-70 mb-2">{t?.noResults || 'По запросу ничего не найдено'}</p>
           {hasFilters && (
             <button

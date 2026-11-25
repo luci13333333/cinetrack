@@ -8,7 +8,7 @@ const PROFILE_COLORS = [
   'bg-amber-600',
 ];
 
-export function AdminPage ({
+export function AdminPage({
   apiUrl,
   token,
   user,
@@ -78,11 +78,11 @@ export function AdminPage ({
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className={`border rounded-3xl p-10 text-center space-y-2 ${cardCls}`}>
-        <h1 className="text-xl font-bold">
+      <div className={`border rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center space-y-2 ${cardCls}`}>
+        <h1 className="text-lg sm:text-xl font-bold">
           {lang === 'en' ? 'Access Denied' : 'Доступ ограничен'}
         </h1>
-        <p className="text-sm opacity-70">
+        <p className="text-xs sm:text-sm opacity-70">
           {lang === 'en'
             ? 'Administrator privileges are required to view this page.'
             : 'Эта страница доступна только пользователям с правами администратора.'}
@@ -217,11 +217,11 @@ export function AdminPage ({
   });
 
   return (
-    <div className="space-y-6">
-      <div className={`border rounded-3xl p-6 space-y-5 shadow-xl ${cardCls}`}>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-          <div>
-            <h1 className="text-2xl font-bold">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
+      <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-5 shadow-xl ${cardCls}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold">
               {lang === 'en' ? '🛡️ Admin Panel' : '🛡️ Панель администратора'}
             </h1>
             <p className="text-xs opacity-70 mt-1">
@@ -231,11 +231,11 @@ export function AdminPage ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setSection('users')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-colors cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                 section === 'users'
                   ? `${accentBgCls} border-transparent text-white`
                   : `${inputCls} opacity-80 hover:opacity-100`
@@ -247,7 +247,7 @@ export function AdminPage ({
             <button
               type="button"
               onClick={() => setSection('reviews')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-colors cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                 section === 'reviews'
                   ? `${accentBgCls} border-transparent text-white`
                   : `${inputCls} opacity-80 hover:opacity-100`
@@ -276,8 +276,8 @@ export function AdminPage ({
                 .slice(0, 2);
 
               return (
-                <div key={id} className={`border rounded-2xl p-4 space-y-3 ${inputCls}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-4">
+                <div key={id} className={`border rounded-2xl p-3.5 sm:p-4 space-y-3 ${inputCls}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                       {u.avatar ? (
                         <img
@@ -308,15 +308,15 @@ export function AdminPage ({
                             {u.role || 'user'}
                           </span>
                         </div>
-                        <p className="text-xs opacity-70 truncate">{u.email}</p>
+                        <p className="text-xs opacity-70 break-all">{u.email}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                       <button
                         type="button"
                         onClick={() => (isEditing ? setEditingUserId(null) : startEditUser(u))}
-                        className="px-3 py-1.5 rounded-xl bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-xs font-semibold cursor-pointer"
+                        className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-xs font-semibold cursor-pointer"
                       >
                         {isEditing
                           ? lang === 'en'
@@ -331,7 +331,7 @@ export function AdminPage ({
                         <button
                           type="button"
                           onClick={() => handleDeleteUser(id)}
-                          className="px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs font-semibold cursor-pointer"
+                          className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs font-semibold cursor-pointer"
                         >
                           {lang === 'en' ? 'Delete' : 'Удалить'}
                         </button>
@@ -386,8 +386,8 @@ export function AdminPage ({
                         />
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs opacity-75">
                             {lang === 'en' ? 'Color:' : 'Цвет:'}
                           </span>
@@ -405,7 +405,7 @@ export function AdminPage ({
 
                         <button
                           type="submit"
-                          className={`${accentBgCls} text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer`}
+                          className={`w-full sm:w-auto ${accentBgCls} text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer`}
                         >
                           {lang === 'en' ? 'Save' : 'Сохранить'}
                         </button>
@@ -436,44 +436,46 @@ export function AdminPage ({
                 const isEditing = editingReviewId === revId;
 
                 return (
-                  <div key={revId} className={`border rounded-2xl p-4 space-y-3 ${inputCls}`}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div key={revId} className={`border rounded-2xl p-3.5 sm:p-4 space-y-3 ${inputCls}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-sm font-bold ${accentTextCls}`}>
+                          <span className={`text-sm font-bold break-words ${accentTextCls}`}>
                             {rev.movie_title || `#${rev.movie_id}`}
                           </span>
-                          <span className="text-xs opacity-75">
+                          <span className="text-xs opacity-75 break-all">
                             • {rev.author} ({rev.user_email})
                           </span>
                         </div>
-                        {!isEditing && <p className="text-xs opacity-90">{rev.text}</p>}
+                        {!isEditing && <p className="text-xs opacity-90 break-words">{rev.text}</p>}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                         <span className="text-yellow-400 font-bold text-xs">
                           ★ {rev.rating} / 10
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => (isEditing ? setEditingReviewId(null) : startEditReview(rev))}
-                          className="px-3 py-1.5 rounded-xl bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-xs font-semibold cursor-pointer"
-                        >
-                          {isEditing
-                            ? lang === 'en'
-                              ? 'Cancel'
-                              : 'Отмена'
-                            : lang === 'en'
-                            ? 'Edit'
-                            : 'Редактировать'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteReview(revId)}
-                          className="px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs font-semibold cursor-pointer"
-                        >
-                          {lang === 'en' ? 'Delete' : 'Удалить'}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => (isEditing ? setEditingReviewId(null) : startEditReview(rev))}
+                            className="px-3 py-1.5 rounded-xl bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-xs font-semibold cursor-pointer"
+                          >
+                            {isEditing
+                              ? lang === 'en'
+                                ? 'Cancel'
+                                : 'Отмена'
+                              : lang === 'en'
+                              ? 'Edit'
+                              : 'Редактировать'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReview(revId)}
+                            className="px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs font-semibold cursor-pointer"
+                          >
+                            {lang === 'en' ? 'Delete' : 'Удалить'}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -491,7 +493,7 @@ export function AdminPage ({
                           required
                         />
 
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <select
                             value={reviewForm.rating}
                             onChange={(e) =>
@@ -508,7 +510,7 @@ export function AdminPage ({
 
                           <button
                             type="submit"
-                            className={`${accentBgCls} text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer`}
+                            className={`w-full sm:w-auto ${accentBgCls} text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer`}
                           >
                             {lang === 'en' ? 'Save' : 'Сохранить'}
                           </button>

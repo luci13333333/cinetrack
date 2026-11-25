@@ -16,10 +16,10 @@ export function MovieCard({ movie, theme, t }) {
   };
 
   const movieId = Number(movie.id);
-  const isFavorite = state.favorites.includes(movieId);
+  const isFavorite = (state?.favorites || []).includes(movieId);
 
   const currentStatus =
-    WATCH_STATUSES.find((statusKey) => (state[statusKey] || []).includes(movieId)) || 'none';
+    WATCH_STATUSES.find((statusKey) => (state?.[statusKey] || []).includes(movieId)) || 'none';
 
   const posterUrl =
     movie.posterUrl ||
@@ -65,7 +65,7 @@ export function MovieCard({ movie, theme, t }) {
 
   return (
     <div
-      className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors ${currentTheme.card}`}
+      className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors min-w-0 ${currentTheme.card}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden bg-gray-950">
         <Link to={`/movie/${movie.id}`} className="block w-full h-full">
@@ -77,7 +77,7 @@ export function MovieCard({ movie, theme, t }) {
           />
         </Link>
 
-        <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 pointer-events-none">
           <RatingBadge rating={rawRating} />
         </div>
 
@@ -86,7 +86,7 @@ export function MovieCard({ movie, theme, t }) {
           onClick={handleToggleFavorite}
           aria-label={favoriteButtonTitle}
           title={favoriteButtonTitle}
-          className={`absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full border backdrop-blur-md flex items-center justify-center text-sm transition-all cursor-pointer shadow-lg ${
+          className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full border backdrop-blur-md flex items-center justify-center text-xs sm:text-sm transition-all cursor-pointer shadow-lg ${
             isFavorite
               ? 'bg-rose-600/90 border-rose-400 text-white scale-105'
               : 'bg-black/65 border-white/15 text-gray-200 hover:bg-black/85 hover:text-rose-400'
@@ -96,25 +96,25 @@ export function MovieCard({ movie, theme, t }) {
         </button>
       </div>
 
-      <div className="p-4 flex flex-col gap-3">
+      <div className="p-2.5 sm:p-4 flex flex-col gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
           <Link
             to={`/movie/${movie.id}`}
-            className="font-semibold text-sm hover:text-blue-400 line-clamp-1 transition-colors"
+            className="font-semibold text-xs sm:text-sm hover:text-blue-400 line-clamp-1 transition-colors break-words"
           >
             {movie.title}
           </Link>
-          <p className="text-xs opacity-70 mt-1">{year}</p>
+          <p className="text-[11px] sm:text-xs opacity-70 mt-0.5 sm:mt-1">{year}</p>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 sm:gap-2">
           <Link
             to={`/movie/${movie.id}#reviews`}
-            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${currentTheme.input} opacity-90 hover:opacity-100 hover:border-blue-500/50`}
+            className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 ${currentTheme.input} opacity-90 hover:opacity-100 hover:border-blue-500/50`}
           >
-            <span>{t?.reviewsButton || '💬 Отзывы'}</span>
+            <span className="truncate">{t?.reviewsButton || '💬 Отзывы'}</span>
             {reviewsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-white/10 text-[11px] font-bold">
+              <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] font-bold shrink-0">
                 {reviewsCount}
               </span>
             )}
@@ -125,7 +125,7 @@ export function MovieCard({ movie, theme, t }) {
             onChange={handleStatusChange}
             onClick={(e) => e.stopPropagation()}
             aria-label={t?.statusLabel || 'Статус просмотра'}
-            className={`w-full px-3 py-2 rounded-xl border text-xs font-medium outline-none transition-colors cursor-pointer ${
+            className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-medium outline-none transition-colors cursor-pointer ${
               currentStatus !== 'none'
                 ? 'bg-blue-600/20 border-blue-500 text-blue-300'
                 : `${currentTheme.input} opacity-90 hover:opacity-100`

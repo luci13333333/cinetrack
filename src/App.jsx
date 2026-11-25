@@ -3,13 +3,13 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { AuthModal } from './components/AuthModal';
 import { Layout } from './components/Layout';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { AdminPage } from './pages/AdminPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { HomePage } from './pages/HomePage';
 import { MoviePage } from './pages/MoviePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
-import { AdminPage } from './pages/AdminPage';
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
@@ -252,9 +252,11 @@ const THEMES = {
 function buildReviewsMap(reviewsList) {
   const map = {};
   (reviewsList || []).forEach((r) => {
+    const revId = r._id || r.id;
     if (!map[r.movie_id]) map[r.movie_id] = { reviews: [] };
     map[r.movie_id].reviews.push({
-      id: r.id,
+      id: revId,
+      _id: revId,
       movie_id: r.movie_id,
       movie_title: r.movie_title,
       movie_poster: r.movie_poster,

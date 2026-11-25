@@ -86,25 +86,25 @@ export function ProfilePage({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className={`border rounded-3xl p-6 space-y-6 shadow-xl ${cardCls}`}>
-        <div className="flex items-center gap-4 border-b border-white/10 pb-6">
+    <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6 min-w-0">
+      <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-xl ${cardCls}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-white/10 pb-5 sm:pb-6">
           {profileAvatar ? (
             <img
               src={profileAvatar}
               alt="Avatar"
-              className="w-16 h-16 rounded-2xl object-cover border border-white/10"
+              className="w-16 h-16 rounded-2xl object-cover border border-white/10 shrink-0"
             />
           ) : (
             <div
-              className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg ${profileColor}`}
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg shrink-0 ${profileColor}`}
             >
               {userInitials}
             </div>
           )}
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold">{user.name}</h1>
-            <p className="text-xs opacity-70">{user.email}</p>
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold break-words">{user.name}</h1>
+            <p className="text-xs opacity-70 break-all">{user.email}</p>
             <div className="pt-1">
               <span
                 className={`inline-block border text-xs font-semibold px-3 py-1 rounded-full ${inputCls} ${accentTextCls}`}
@@ -115,13 +115,13 @@ export function ProfilePage({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className={`border rounded-2xl p-4 text-center ${inputCls}`}>
-            <p className={`text-2xl font-extrabold ${accentTextCls}`}>{userReviewsCount}</p>
+            <p className={`text-xl sm:text-2xl font-extrabold ${accentTextCls}`}>{userReviewsCount}</p>
             <p className="text-xs opacity-70 mt-1">{t?.reviewsInDb || 'Отзывов'}</p>
           </div>
           <div className={`border rounded-2xl p-4 text-center ${inputCls}`}>
-            <p className="text-2xl font-extrabold text-yellow-400">
+            <p className="text-xl sm:text-2xl font-extrabold text-yellow-400">
               ★ {avgUserRating} {t?.outOfTen || '/ 10'}
             </p>
             <p className="text-xs opacity-70 mt-1">{t?.avgRating || 'Средняя оценка'}</p>
@@ -159,7 +159,7 @@ export function ProfilePage({
             <label className="block text-xs font-medium opacity-80 mb-1.5">
               {t?.colorLabel || 'Цвет профиля'}
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {PROFILE_COLORS.map((c) => (
                 <button
                   key={c}
@@ -182,8 +182,8 @@ export function ProfilePage({
         </form>
       </div>
 
-      <div className={`border rounded-3xl p-6 space-y-4 shadow-xl ${cardCls}`}>
-        <h2 className="text-lg font-bold">
+      <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl ${cardCls}`}>
+        <h2 className="text-base sm:text-lg font-bold">
           {t?.reviewsHistoryTitle || '📝 История ваших отзывов'} ({allUserReviews.length})
         </h2>
 
@@ -195,9 +195,9 @@ export function ProfilePage({
               return (
                 <div
                   key={rev.id || `${rev.movie_id}-${rev.date}`}
-                  className={`border rounded-2xl p-4 space-y-3 ${inputCls}`}
+                  className={`border rounded-2xl p-3.5 sm:p-4 space-y-3 ${inputCls}`}
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div
                       onClick={() => onSelectMovieFromReview && onSelectMovieFromReview(rev)}
                       className="flex items-center gap-3 cursor-pointer group min-w-0"
@@ -217,42 +217,46 @@ export function ProfilePage({
                             (lang === 'en' ? `Movie #${rev.movie_id}` : `Фильм #${rev.movie_id}`)}
                         </p>
                         {!isEditing && (
-                          <p className="text-xs opacity-90 line-clamp-2 mt-0.5">«{rev.text}»</p>
+                          <p className="text-xs opacity-90 line-clamp-2 mt-0.5 break-words">
+                            «{rev.text}»
+                          </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
+                      <div className="text-left sm:text-right">
                         <span className="text-yellow-400 font-bold text-xs block">
                           ★ {rev.rating} {t?.outOfTen || '/ 10'}
                         </span>
                         <span className="text-[10px] opacity-60">{rev.date}</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => (isEditing ? cancelEditing() : startEditing(rev))}
-                        className={`p-2 rounded-xl transition-colors text-xs cursor-pointer ${
-                          isEditing
-                            ? 'bg-amber-500/20 text-amber-300'
-                            : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                        }`}
-                        title={t?.editReviewTitle || 'Редактировать отзыв'}
-                      >
-                        ✏️
-                      </button>
-
-                      {onDeleteReview && (
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => onDeleteReview(rev.id)}
-                          className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs cursor-pointer"
-                          title={t?.deleteReviewTitle || 'Удалить отзыв'}
+                          onClick={() => (isEditing ? cancelEditing() : startEditing(rev))}
+                          className={`p-2 rounded-xl transition-colors text-xs cursor-pointer ${
+                            isEditing
+                              ? 'bg-amber-500/20 text-amber-300'
+                              : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                          }`}
+                          title={t?.editReviewTitle || 'Редактировать отзыв'}
                         >
-                          🗑️
+                          ✏️
                         </button>
-                      )}
+
+                        {onDeleteReview && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteReview(rev.id)}
+                            className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs cursor-pointer"
+                            title={t?.deleteReviewTitle || 'Удалить отзыв'}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -269,7 +273,7 @@ export function ProfilePage({
                         required
                       />
 
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xs opacity-80">
                             {t?.ratingScaleLabel || 'Оценка (1-10):'}
@@ -291,14 +295,14 @@ export function ProfilePage({
                           <button
                             type="button"
                             onClick={cancelEditing}
-                            className={`border px-4 py-2 rounded-xl text-xs font-medium opacity-80 hover:opacity-100 cursor-pointer ${cardCls}`}
+                            className={`flex-1 sm:flex-none border px-4 py-2 rounded-xl text-xs font-medium opacity-80 hover:opacity-100 cursor-pointer ${cardCls}`}
                           >
                             {t?.cancel || 'Отмена'}
                           </button>
                           <button
                             type="submit"
                             disabled={savingReview}
-                            className={`${accentBgCls} text-white font-semibold text-xs px-5 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-60`}
+                            className={`flex-1 sm:flex-none ${accentBgCls} text-white font-semibold text-xs px-5 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-60`}
                           >
                             {t?.saveChanges || 'Сохранить изменения'}
                           </button>

@@ -91,24 +91,26 @@ export function SearchPage({
   const inputCls = currentTheme?.input || 'bg-gray-900 border-gray-800 text-white';
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">{t?.searchPageTitle || 'Поиск фильмов'}</h1>
+    <div className="min-w-0">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
+        {t?.searchPageTitle || 'Поиск фильмов'}
+      </h1>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 mb-6 sm:mb-8">
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           placeholder={t?.searchPlaceholder || 'Введите название фильма...'}
-          className={`flex-1 border focus:border-blue-500 rounded-xl px-4 py-3 text-sm outline-none transition-colors ${inputCls}`}
+          className={`w-full flex-1 border focus:border-blue-500 rounded-xl px-4 py-3 text-sm outline-none transition-colors ${inputCls}`}
         />
 
         {debouncedQuery && (
           <button
             type="button"
             onClick={handleShare}
-            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl text-sm font-medium text-white transition-colors shrink-0 cursor-pointer"
+            className="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl text-sm font-medium text-white transition-colors shrink-0 cursor-pointer"
           >
             {copied
               ? t?.copied || '✓ Ссылка скопирована'
@@ -141,7 +143,7 @@ export function SearchPage({
       )}
 
       {movies.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
           {movies.map((movie) => (
             <MovieCard
               key={movie.id}
