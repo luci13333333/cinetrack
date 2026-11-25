@@ -176,6 +176,7 @@ export function HomePage({
                 key={movie.id}
                 movie={movie}
                 t={t}
+                lang={lang}
                 onCardClick={() => {
                   if (onOpenMovieModal) {
                     onOpenMovieModal(movie);

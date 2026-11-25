@@ -9,7 +9,6 @@ const LOGO_BASE = 'https://image.tmdb.org/t/p/w92';
 const FALLBACK_POSTER =
   'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
 
-// Кэш провайдеров в рамках сессии, чтобы не запрашивать один и тот же фильм повторно
 const providersCache = new Map();
 
 function extractProviders(regionData) {
@@ -32,16 +31,18 @@ function extractProviders(regionData) {
 
   return {
     link: regionData.link || null,
-    list: Array.from(uniqueMap.values()).slice(0, 5),
+    list: Array.from(uniqueMap.values()).slice(0, 4),
   };
 }
 
 export function MovieCard({ movie, theme, t, lang = 'ru' }) {
   const { state, dispatch } = useFavorites();
 
-  const [shouldLoadProviders, setShouldLoadProviders] = useState(false);
+  const movieId = Number(movie.id);
+  const preferredRegion = lang === 'en' ? 'US' : 'RU';
+  const cacheKey = `${movieId}_${preferredRegion}`;
+
   const [providersData, setProvidersData] = useState(() => {
-    const cacheKey = `${movie.id}_${lang}`;
     return providersCache.get(cacheKey) || { link: null, list: [] };
   });
 
@@ -50,7 +51,6 @@ export function MovieCard({ movie, theme, t, lang = 'ru' }) {
     input: 'bg-gray-950 border-gray-800 text-white',
   };
 
-  const movieId = Number(movie.id);
   const isFavorite = state.favorites.includes(movieId);
 
   const currentStatus =
@@ -82,10 +82,7 @@ export function MovieCard({ movie, theme, t, lang = 'ru' }) {
     : t?.addToFavorites || '♡ В избранное';
 
   useEffect(() => {
-    if (!shouldLoadProviders || !API_KEY || !movieId) return;
-
-    const region = lang === 'en' ? 'US' : 'RU';
-    const cacheKey = `${movieId}_${lang}`;
+    if (!API_KEY || !movieId) return;
 
     if (providersCache.has(cacheKey)) {
       setProvidersData(providersCache.get(cacheKey));
@@ -99,19 +96,26 @@ export function MovieCard({ movie, theme, t, lang = 'ru' }) {
       .then((json) => {
         if (cancelled) return;
         const results = json?.results || {};
-        const selectedRegion = results[region] || results.US || results.RU || null;
+        const selectedRegion =
+          results[preferredRegion] ||
+          results.RU ||
+          results.US ||
+          results.GB ||
+          Object.values(results)[0] ||
+          null;
+
         const parsed = extractProviders(selectedRegion);
         providersCache.set(cacheKey, parsed);
         setProvidersData(parsed);
       })
       .catch(() => {
-        // Игнорируем сетевые ошибки при подгрузке значков площадок
+        // Игнорируем сетевые ошибки
       });
 
     return () => {
       cancelled = true;
     };
-  }, [shouldLoadProviders, movieId, lang]);
+  }, [cacheKey, movieId, preferredRegion]);
 
   const handleToggleFavorite = (e) => {
     e.preventDefault();
@@ -132,8 +136,6 @@ export function MovieCard({ movie, theme, t, lang = 'ru' }) {
 
   return (
     <div
-      onMouseEnter={() => setShouldLoadProviders(true)}
-      onFocus={() => setShouldLoadProviders(true)}
       className={`group relative rounded-2xl border overflow-hidden flex flex-col justify-between hover:border-blue-500/60 transition-colors ${currentTheme.card}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden bg-gray-950">
@@ -176,37 +178,59 @@ export function MovieCard({ movie, theme, t, lang = 'ru' }) {
           <p className="text-xs opacity-70 mt-1">{year}</p>
         </div>
 
-        {providersData.list.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {providersData.list.map((provider) => {
-              const targetUrl =
-                providersData.link ||
-                `https://www.themoviedb.org/movie/${movieId}/watch`;
+        {/* Значки площадок для просмотра */}
+        <div className="flex items-center justify-between gap-2 min-h-7">
+          <span className="text-[11px] opacity-65">
+            {lang === 'en' ? 'Where to watch:' : 'Где смотреть:'}
+          </span>
 
-              return (
-                <a
-                  key={provider.provider_id}
-                  href={targetUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title={provider.provider_name}
-                  aria-label={provider.provider_name}
-                  className="w-6 h-6 rounded-lg overflow-hidden border border-white/15 bg-black/40 hover:scale-110 hover:border-blue-400 transition-transform shrink-0"
-                >
-                  {provider.logo_path && (
-                    <img
-                      src={`${LOGO_BASE}${provider.logo_path}`}
-                      alt={provider.provider_name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                </a>
-              );
-            })}
-          </div>
-        )}
+          {providersData.list.length > 0 ? (
+            <div className="flex items-center gap-1.5">
+              {providersData.list.map((provider) => {
+                const targetUrl =
+                  providersData.link ||
+                  `https://www.themoviedb.org/movie/${movieId}/watch`;
+
+                return (
+                  <a
+                    key={provider.provider_id}
+                    href={targetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    title={provider.provider_name}
+                    aria-label={provider.provider_name}
+                    className="w-7 h-7 rounded-lg overflow-hidden border border-white/20 bg-black/50 hover:scale-110 hover:border-blue-400 transition-transform shrink-0"
+                  >
+                    {provider.logo_path ? (
+                      <img
+                        src={`${LOGO_BASE}${provider.logo_path}`}
+                        alt={provider.provider_name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center text-[10px] font-bold">
+                        ▶
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <a
+              href={`https://www.themoviedb.org/movie/${movieId}/watch`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="TMDB Watch Providers"
+              className="w-7 h-7 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center text-[10px] font-extrabold tracking-tight text-blue-400 shrink-0"
+            >
+              TMDB
+            </a>
+          )}
+        </div>
 
         <div className="flex flex-col gap-2">
           <Link
