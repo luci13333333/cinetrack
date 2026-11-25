@@ -4,12 +4,13 @@ import { RatingBadge } from '../components/RatingBadge';
 import { useFavorites } from '../context/FavoritesContext';
 import { useFetch } from '../hooks/useFetch';
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 const FALLBACK_POSTER =
   'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=800&auto=format&fit=crop';
 
 export function MoviePage({
+  t,
   lang = 'ru',
   currentTheme,
   user,
@@ -129,19 +130,29 @@ export function MoviePage({
   };
 
   if (loading) {
-    return <div className="text-center py-12 opacity-70">Загрузка карточки фильма...</div>;
+    return (
+      <div className="text-center py-12 opacity-70">
+        {t?.movieLoading || 'Загрузка карточки фильма...'}
+      </div>
+    );
   }
 
   if (error || !movie) {
     return (
       <div className="text-center py-12 space-y-4">
-        <p className="text-red-400">{error ? `Ошибка загрузки: ${error}` : 'Фильм не найден.'}</p>
+        <p className="text-red-400">
+          {error
+            ? lang === 'en'
+              ? `Loading error: ${error}`
+              : `Ошибка загрузки: ${error}`
+            : t?.movieNotFound || 'Фильм не найден.'}
+        </p>
         <button
           type="button"
           onClick={handleBack}
           className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl text-sm text-white cursor-pointer"
         >
-          ← Назад
+          {t?.back || '← Назад'}
         </button>
       </div>
     );
@@ -193,7 +204,7 @@ export function MoviePage({
         onClick={handleBack}
         className={`border px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${cardCls}`}
       >
-        ← Назад
+        {t?.back || '← Назад'}
       </button>
 
       <div className={`border rounded-3xl p-6 grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 ${cardCls}`}>
@@ -211,8 +222,14 @@ export function MoviePage({
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-sm opacity-85">
-            <span>Год: {movie.release_date ? movie.release_date.slice(0, 4) : '—'}</span>
-            {movie.runtime > 0 && <span>Длительность: {movie.runtime} мин.</span>}
+            <span>
+              {t?.yearLabel || 'Год'}: {movie.release_date ? movie.release_date.slice(0, 4) : '—'}
+            </span>
+            {movie.runtime > 0 && (
+              <span>
+                {t?.runtimeLabel || 'Длительность'}: {movie.runtime} {t?.minutesShort || 'мин.'}
+              </span>
+            )}
             <button
               type="button"
               onClick={handleToggleFavorite}
@@ -220,7 +237,9 @@ export function MoviePage({
                 isFav ? 'bg-rose-600/20 border-rose-500 text-rose-400' : inputCls
               }`}
             >
-              {isFav ? '❤️ В избранном' : '🤍 В избранное'}
+              {isFav
+                ? t?.movieFavActive || '❤️ В избранном'
+                : t?.movieFavInactive || '🤍 В избранное'}
             </button>
           </div>
 
@@ -236,17 +255,17 @@ export function MoviePage({
 
           <div>
             <h2 className={`text-sm font-bold uppercase tracking-wider mb-2 ${accentTextCls}`}>
-              Описание
+              {t?.overviewTitle || 'Описание'}
             </h2>
             <p className="opacity-90 leading-relaxed text-sm">
-              {movie.overview || 'Описание отсутствует.'}
+              {movie.overview || t?.noOverview || 'Описание отсутствует.'}
             </p>
           </div>
 
           {castList.length > 0 && (
             <div>
               <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${accentTextCls}`}>
-                В главных ролях
+                {t?.castTitle || 'В главных ролях'}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {castList.map((actor) => (
@@ -267,12 +286,12 @@ export function MoviePage({
       {trailerKey && (
         <section className={`border rounded-3xl p-6 ${cardCls}`}>
           <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
-            🎬 Официальный трейлер
+            {t?.trailerTitle || '🎬 Официальный трейлер'}
           </h2>
           <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-black">
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
-              title="Официальный трейлер"
+              title={t?.trailerTitle || 'Официальный трейлер'}
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -284,7 +303,7 @@ export function MoviePage({
       {collectionMovies.length > 0 && (
         <section className={`border rounded-3xl p-6 ${cardCls}`}>
           <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
-            🍿 Другие части франшизы
+            {t?.collectionTitle || '🍿 Другие части франшизы'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {collectionMovies.map((item) => (
@@ -317,7 +336,7 @@ export function MoviePage({
       {similarMovies.length > 0 && (
         <section className={`border rounded-3xl p-6 ${cardCls}`}>
           <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${accentTextCls}`}>
-            🔥 Похожие фильмы
+            {t?.similarTitle || '🔥 Похожие фильмы'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {similarMovies.map((item) => (
@@ -348,7 +367,9 @@ export function MoviePage({
       )}
 
       <section className={`border rounded-3xl p-6 space-y-5 ${cardCls}`}>
-        <h2 className="text-lg font-bold">💭 Отзывы и оценки ({savedReviews.length})</h2>
+        <h2 className="text-lg font-bold">
+          {t?.reviewsTitle || '💭 Отзывы и оценки'} ({savedReviews.length})
+        </h2>
 
         {user ? (
           <form onSubmit={handleSubmitReview} className={`border p-4 rounded-2xl space-y-4 ${inputCls}`}>
@@ -356,7 +377,7 @@ export function MoviePage({
               <div
                 className={`flex items-center justify-between text-xs font-semibold px-3 py-1.5 rounded-xl ${accentTextCls} bg-black/20`}
               >
-                <span>Редактирование вашего отзыва</span>
+                <span>{t?.editingReviewBanner || 'Редактирование вашего отзыва'}</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -366,7 +387,7 @@ export function MoviePage({
                   }}
                   className="opacity-70 hover:opacity-100 cursor-pointer"
                 >
-                  Отмена
+                  {t?.cancel || 'Отмена'}
                 </button>
               </div>
             )}
@@ -374,14 +395,16 @@ export function MoviePage({
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Напишите ваш отзыв о фильме..."
+              placeholder={t?.reviewPlaceholder || 'Напишите ваш отзыв о фильме...'}
               className={`w-full border rounded-xl p-3 text-sm outline-none resize-none h-24 ${inputCls}`}
               required
             />
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs opacity-80">Оценка (1-10):</span>
+                <span className="text-xs opacity-80">
+                  {t?.ratingScaleLabel || 'Оценка (1-10):'}
+                </span>
                 <select
                   value={rating}
                   onChange={(e) => setRating(Number(e.target.value))}
@@ -389,7 +412,7 @@ export function MoviePage({
                 >
                   {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((num) => (
                     <option key={num} value={num}>
-                      ★ {num} / 10
+                      ★ {num} {t?.outOfTen || '/ 10'}
                     </option>
                   ))}
                 </select>
@@ -399,13 +422,16 @@ export function MoviePage({
                 type="submit"
                 className={`${accentBgCls} text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition-colors cursor-pointer`}
               >
-                {editingReviewId ? 'Сохранить изменения' : 'Отправить'}
+                {editingReviewId
+                  ? t?.saveChanges || 'Сохранить изменения'
+                  : t?.sendReview || 'Отправить'}
               </button>
             </div>
           </form>
         ) : (
           <p className={`text-xs p-4 rounded-2xl border text-center opacity-80 ${inputCls}`}>
-            Авторизуйтесь, чтобы оставить отзыв или поставить оценку.
+            {t?.authRequiredForReview ||
+              'Авторизуйтесь, чтобы оставить отзыв или поставить оценку.'}
           </p>
         )}
 
@@ -423,7 +449,7 @@ export function MoviePage({
                       <span className={`text-sm font-bold ${accentTextCls}`}>{rev.author}</span>
                       {isOwner && (
                         <span className="text-[10px] bg-black/30 px-2 py-0.5 rounded-md font-medium">
-                          Вы
+                          {t?.youBadge || 'Вы'}
                         </span>
                       )}
                     </div>
@@ -432,7 +458,9 @@ export function MoviePage({
 
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-400 font-bold text-xs">★ {rev.rating} / 10</span>
+                      <span className="text-yellow-400 font-bold text-xs">
+                        ★ {rev.rating} {t?.outOfTen || '/ 10'}
+                      </span>
                       <span className="text-[10px] opacity-60">{rev.date}</span>
                     </div>
 
@@ -442,7 +470,7 @@ export function MoviePage({
                           type="button"
                           onClick={() => handleStartEdit(rev)}
                           className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors text-xs cursor-pointer"
-                          title="Редактировать отзыв"
+                          title={t?.editReviewTitle || 'Редактировать отзыв'}
                         >
                           ✏️
                         </button>
@@ -451,7 +479,7 @@ export function MoviePage({
                             type="button"
                             onClick={() => onDeleteReview(rev.id)}
                             className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs cursor-pointer"
-                            title="Удалить отзыв"
+                            title={t?.deleteReviewTitle || 'Удалить отзыв'}
                           >
                             🗑️
                           </button>
@@ -463,7 +491,9 @@ export function MoviePage({
               );
             })
           ) : (
-            <p className="text-xs opacity-60 text-center py-4">У этого фильма пока нет отзывов.</p>
+            <p className="text-xs opacity-60 text-center py-4">
+              {t?.noMovieReviews || 'У этого фильма пока нет отзывов.'}
+            </p>
           )}
         </div>
       </section>

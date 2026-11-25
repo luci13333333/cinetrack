@@ -10,25 +10,77 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
 
-const TMDB_API_KEY =
-  import.meta.env.VITE_TMDB_API_KEY || '2630a76d06d771cee9916d7510de9cfc';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 
 const translations = {
   ru: {
     home: 'Главная',
+    searchNav: 'Поиск',
+    listsNav: 'Мои списки',
     favorites: 'Избранное',
     profile: 'Профиль',
     login: 'Войти / Регистрация',
     logout: 'Выйти',
     catalog: 'Каталог TMDB API',
+    searchPageTitle: 'Поиск фильмов',
     searchPlaceholder: 'Поиск в TMDB...',
+    searchHint: 'Введите название фильма, чтобы начать поиск.',
+    searching: 'Ищем фильмы...',
+    share: 'Поделиться',
+    copied: '✓ Ссылка скопирована',
     reset: 'Сбросить',
     retry: 'Повторить попытку',
     noResults: 'По запросу ничего не найдено',
     allGenres: 'Все жанры',
     allYears: 'Все года',
     minRatingLabel: 'Мин. рейтинг:',
+    inFavorites: '♥ В избранном',
+    addToFavorites: '♡ В избранное',
+    movieFavActive: '❤️ В избранном',
+    movieFavInactive: '🤍 В избранное',
+    statusLabel: 'Статус просмотра',
+    statusNone: '+ Статус просмотра',
+    statusWatchlist: '📌 Хочу посмотреть',
+    statusWatching: '▶ Смотрю',
+    statusCompleted: '✅ Просмотрено',
+    statusOnHold: '⏸ Отложено',
+    statusDropped: '✖ Бросил',
+    listsTitle: 'Мои списки',
+    listsSubtitle: 'Категории фильмов, сохранённые в вашем аккаунте',
+    listsEmpty: 'Списки пока пусты. Добавьте фильмы на главной странице или в поиске.',
+    favoritesEmpty: 'В избранном пока пусто.',
+    statusCategoriesTitle: '📂 Категории просмотра',
+    sectionEmpty: 'Пока пусто',
+    unknownYear: 'Год неизвестен',
+    back: '← Назад',
+    movieLoading: 'Загрузка карточки фильма...',
+    movieNotFound: 'Фильм не найден.',
+    yearLabel: 'Год',
+    runtimeLabel: 'Длительность',
+    minutesShort: 'мин.',
+    overviewTitle: 'Описание',
+    noOverview: 'Описание отсутствует.',
+    castTitle: 'В главных ролях',
+    trailerTitle: '🎬 Официальный трейлер',
+    collectionTitle: '🍿 Другие части франшизы',
+    similarTitle: '🔥 Похожие фильмы',
+    reviewsTitle: '💭 Отзывы и оценки',
+    editingReviewBanner: 'Редактирование вашего отзыва',
+    cancel: 'Отмена',
+    reviewPlaceholder: 'Напишите ваш отзыв о фильме...',
+    ratingScaleLabel: 'Оценка (1-10):',
+    outOfTen: '/ 10',
+    saveChanges: 'Сохранить изменения',
+    sendReview: 'Отправить',
+    authRequiredForReview: 'Авторизуйтесь, чтобы оставить отзыв или поставить оценку.',
+    youBadge: 'Вы',
+    noMovieReviews: 'У этого фильма пока нет отзывов.',
+    editReviewTitle: 'Редактировать отзыв',
+    deleteReviewTitle: 'Удалить отзыв',
+    notFoundTitle: 'Страница не найдена',
+    notFoundDescription: 'Запрашиваемый адрес не существует или был перемещён.',
+    backHome: 'Вернуться на главную',
     saveProfile: 'Сохранить изменения',
     nameLabel: 'Имя пользователя',
     emailLabel: 'Email адрес',
@@ -36,22 +88,81 @@ const translations = {
     colorLabel: 'Цвет профиля',
     themeLabel: 'Тема оформления:',
     favoriteGenre: 'Любимый жанр',
+    favoriteGenreUnknown: 'Не определен',
+    reviewsInDb: 'Отзывов в БД',
+    avgRating: 'Средняя оценка',
+    reviewsHistoryTitle: '📝 История ваших отзывов из БД',
+    noUserReviews: 'В базе данных нет ваших отзывов.',
     savedToast: 'Профиль успешно сохранен в БД!',
+    scrollTop: '↑ Наверх',
   },
   en: {
     home: 'Home',
+    searchNav: 'Search',
+    listsNav: 'My Lists',
     favorites: 'Favorites',
     profile: 'Profile',
     login: 'Sign In / Register',
     logout: 'Log Out',
     catalog: 'TMDB API Catalog',
+    searchPageTitle: 'Search Movies',
     searchPlaceholder: 'Search TMDB...',
+    searchHint: 'Enter a movie title to start searching.',
+    searching: 'Searching movies...',
+    share: 'Share',
+    copied: '✓ Link copied',
     reset: 'Reset',
     retry: 'Try Again',
     noResults: 'No movies found',
     allGenres: 'All Genres',
     allYears: 'All Years',
     minRatingLabel: 'Min Rating:',
+    inFavorites: '♥ In Favorites',
+    addToFavorites: '♡ Add to Favorites',
+    movieFavActive: '❤️ In Favorites',
+    movieFavInactive: '🤍 Add to Favorites',
+    statusLabel: 'Watch status',
+    statusNone: '+ Watch status',
+    statusWatchlist: '📌 Plan to Watch',
+    statusWatching: '▶ Watching',
+    statusCompleted: '✅ Completed',
+    statusOnHold: '⏸ On Hold',
+    statusDropped: '✖ Dropped',
+    listsTitle: 'My Lists',
+    listsSubtitle: 'Movie categories saved in your account',
+    listsEmpty: 'Your lists are empty. Add movies from the home page or search.',
+    favoritesEmpty: 'No movies in favorites yet.',
+    statusCategoriesTitle: '📂 Watch Categories',
+    sectionEmpty: 'Empty for now',
+    unknownYear: 'Year unknown',
+    back: '← Back',
+    movieLoading: 'Loading movie details...',
+    movieNotFound: 'Movie not found.',
+    yearLabel: 'Year',
+    runtimeLabel: 'Runtime',
+    minutesShort: 'min.',
+    overviewTitle: 'Overview',
+    noOverview: 'No overview available.',
+    castTitle: 'Top Billed Cast',
+    trailerTitle: '🎬 Official Trailer',
+    collectionTitle: '🍿 More in the Franchise',
+    similarTitle: '🔥 Similar Movies',
+    reviewsTitle: '💭 Reviews & Ratings',
+    editingReviewBanner: 'Editing your review',
+    cancel: 'Cancel',
+    reviewPlaceholder: 'Write your review of the movie...',
+    ratingScaleLabel: 'Rating (1-10):',
+    outOfTen: '/ 10',
+    saveChanges: 'Save Changes',
+    sendReview: 'Submit',
+    authRequiredForReview: 'Sign in to leave a review or rate this movie.',
+    youBadge: 'You',
+    noMovieReviews: 'No reviews for this movie yet.',
+    editReviewTitle: 'Edit review',
+    deleteReviewTitle: 'Delete review',
+    notFoundTitle: 'Page Not Found',
+    notFoundDescription: 'The requested page does not exist or has been moved.',
+    backHome: 'Back to Home',
     saveProfile: 'Save Changes',
     nameLabel: 'Username',
     emailLabel: 'Email address',
@@ -59,13 +170,19 @@ const translations = {
     colorLabel: 'Profile Color',
     themeLabel: 'Theme:',
     favoriteGenre: 'Favorite Genre',
+    favoriteGenreUnknown: 'Not determined',
+    reviewsInDb: 'Reviews in DB',
+    avgRating: 'Average Rating',
+    reviewsHistoryTitle: '📝 Your Reviews History in DB',
+    noUserReviews: 'You have no reviews in the database.',
     savedToast: 'Profile successfully saved in DB!',
+    scrollTop: '↑ Top',
   },
 };
 
 const THEMES = {
   space: {
-    name: '🌌 Космическая ночь',
+    name: { ru: '🌌 Космическая ночь', en: '🌌 Space Night' },
     bg: 'bg-slate-950 text-slate-100',
     header: 'bg-slate-900/80 border-slate-800 text-slate-100',
     card: 'bg-slate-900 border-slate-800 text-slate-100',
@@ -74,7 +191,7 @@ const THEMES = {
     accentText: 'text-indigo-400',
   },
   vampire: {
-    name: '🧛‍♂️ Вампир (Dark)',
+    name: { ru: '🧛‍♂️ Вампир (Dark)', en: '🧛‍♂️ Vampire (Dark)' },
     bg: 'bg-neutral-950 text-neutral-100',
     header: 'bg-neutral-900/80 border-red-950 text-neutral-100',
     card: 'bg-neutral-900 border-red-950/50 text-neutral-100',
@@ -83,7 +200,7 @@ const THEMES = {
     accentText: 'text-red-500',
   },
   forest: {
-    name: '🌲 Лесной мх',
+    name: { ru: '🌲 Лесной мох', en: '🌲 Forest Moss' },
     bg: 'bg-zinc-950 text-emerald-50',
     header: 'bg-zinc-900/80 border-emerald-950 text-emerald-50',
     card: 'bg-zinc-900 border-emerald-900/30 text-emerald-50',
@@ -92,7 +209,7 @@ const THEMES = {
     accentText: 'text-emerald-400',
   },
   light: {
-    name: '☀️ Светлая классика',
+    name: { ru: '☀️ Светлая классика', en: '☀️ Classic Light' },
     bg: 'bg-gray-100 text-gray-900',
     header: 'bg-white/80 border-gray-200 text-gray-900',
     card: 'bg-white border-gray-200 text-gray-900',
@@ -101,7 +218,7 @@ const THEMES = {
     accentText: 'text-blue-600',
   },
   latte: {
-    name: '☕ Теплый латте',
+    name: { ru: '☕ Теплый латте', en: '☕ Warm Latte' },
     bg: 'bg-stone-100 text-stone-900',
     header: 'bg-stone-200/80 border-stone-300 text-stone-900',
     card: 'bg-stone-200 border-stone-300 text-stone-900',
@@ -110,7 +227,7 @@ const THEMES = {
     accentText: 'text-amber-700',
   },
   cyberpunk: {
-    name: '⚡ Киберпанк',
+    name: { ru: '⚡ Киберпанк', en: '⚡ Cyberpunk' },
     bg: 'bg-zinc-950 text-yellow-100',
     header: 'bg-black/90 border-yellow-500/30 text-yellow-100',
     card: 'bg-zinc-900 border-yellow-500/30 text-yellow-100',
@@ -119,7 +236,7 @@ const THEMES = {
     accentText: 'text-yellow-400',
   },
   ocean: {
-    name: '🌊 Океанская бриза',
+    name: { ru: '🌊 Океанская бриза', en: '🌊 Ocean Breeze' },
     bg: 'bg-cyan-950 text-cyan-50',
     header: 'bg-cyan-900/80 border-cyan-800 text-cyan-50',
     card: 'bg-cyan-900/50 border-cyan-800 text-cyan-50',
@@ -164,21 +281,22 @@ export default function App() {
   const t = translations[lang];
 
   const [themeKey, setThemeKey] = useState(() => {
-  try {
-    const savedTheme = localStorage.getItem('cinetrack_theme');
-    return savedTheme && THEMES[savedTheme] ? savedTheme : 'space';
-  } catch {
-    return 'space';
-  }});
-   const currentTheme = THEMES[themeKey] || THEMES.space;
+    try {
+      const savedTheme = localStorage.getItem('cinetrack_theme');
+      return savedTheme && THEMES[savedTheme] ? savedTheme : 'space';
+    } catch {
+      return 'space';
+    }
+  });
+  const currentTheme = THEMES[themeKey] || THEMES.space;
 
-useEffect(() => {
-  try {
-    localStorage.setItem('cinetrack_theme', themeKey);
-  } catch (err) {
-    console.error('Ошибка сохранения темы в localStorage:', err);
-  }
-}, [themeKey]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('cinetrack_theme', themeKey);
+    } catch (err) {
+      console.error('Ошибка сохранения темы в localStorage:', err);
+    }
+  }, [themeKey]);
 
   const [genres, setGenres] = useState([]);
   const [knownMovies, setKnownMovies] = useState([]);
@@ -282,7 +400,9 @@ useEffect(() => {
     setProfileName(userData.name || '');
     setProfileAvatar(userData.avatar || '');
     setProfileColor(userData.color || 'bg-blue-600');
-    showToast(`Добро пожаловать, ${userData.name}!`);
+    showToast(
+      lang === 'en' ? `Welcome, ${userData.name}!` : `Добро пожаловать, ${userData.name}!`
+    );
   };
 
   const handleLogout = () => {
@@ -291,7 +411,7 @@ useEffect(() => {
     setToken(null);
     setUser(null);
     navigate('/');
-    showToast('Вы вышли из аккаунта');
+    showToast(lang === 'en' ? 'You have logged out' : 'Вы вышли из аккаунта');
   };
 
   const handleSaveProfile = async (e) => {
@@ -325,7 +445,9 @@ useEffect(() => {
   const handleUpdateMovie = async (updatedMovie, newReviewPayload) => {
     if (!token) {
       setIsAuthOpen(true);
-      showToast('Войдите, чтобы оставлять отзывы');
+      showToast(
+        lang === 'en' ? 'Sign in to leave reviews' : 'Войдите, чтобы оставлять отзывы'
+      );
       return;
     }
 
@@ -352,14 +474,18 @@ useEffect(() => {
         setToken(null);
         setUser(null);
         setIsAuthOpen(true);
-        showToast('Сессия истекла, войдите заново');
+        showToast(
+          lang === 'en' ? 'Session expired, please sign in again' : 'Сессия истекла, войдите заново'
+        );
         return;
       }
 
       if (res.ok) {
         const allReviewsList = await res.json();
         setMovieReviewsMap(buildReviewsMap(allReviewsList));
-        showToast('Отзыв успешно сохранен в БД!');
+        showToast(
+          lang === 'en' ? 'Review saved to DB!' : 'Отзыв успешно сохранен в БД!'
+        );
       }
     } catch (err) {
       console.error('Ошибка сохранения отзыва:', err);
@@ -377,7 +503,9 @@ useEffect(() => {
       if (res.ok) {
         const allReviewsList = await res.json();
         setMovieReviewsMap(buildReviewsMap(allReviewsList));
-        showToast('Отзыв удален из БД');
+        showToast(
+          lang === 'en' ? 'Review deleted from DB' : 'Отзыв удален из БД'
+        );
       }
     } catch (err) {
       console.error('Ошибка удаления:', err);
@@ -416,7 +544,7 @@ useEffect(() => {
       (a, b) => genreCounts[b] - genreCounts[a]
     )[0];
     const foundGenreObj = genres.find((g) => g.id === Number(topGenreId));
-    return foundGenreObj ? foundGenreObj.name : 'Не определен';
+    return foundGenreObj ? foundGenreObj.name : t.favoriteGenreUnknown;
   })();
 
   const userInitials = user?.name
@@ -433,6 +561,7 @@ useEffect(() => {
       token={token}
       onRequireAuth={() => setIsAuthOpen(true)}
       onNotify={showToast}
+      lang={lang}
     >
       <Routes>
         <Route
@@ -482,6 +611,7 @@ useEffect(() => {
             path="movie/:id"
             element={
               <MoviePage
+                t={t}
                 lang={lang}
                 currentTheme={currentTheme}
                 user={user}
@@ -495,6 +625,7 @@ useEffect(() => {
             path="favorites"
             element={
               <FavoritesPage
+                t={t}
                 lang={lang}
                 currentTheme={currentTheme}
                 knownMovies={knownMovies}
@@ -506,6 +637,7 @@ useEffect(() => {
             element={
               <ProfilePage
                 t={t}
+                lang={lang}
                 user={user}
                 userInitials={userInitials}
                 currentTheme={currentTheme}
@@ -526,7 +658,7 @@ useEffect(() => {
             }
           />
           <Route path="home" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage t={t} />} />
         </Route>
       </Routes>
 
@@ -534,6 +666,7 @@ useEffect(() => {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLogin={handleLogin}
+        lang={lang}
       />
     </FavoritesProvider>
   );
